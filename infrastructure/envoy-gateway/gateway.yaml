@@ -1,0 +1,60 @@
+---
+# =============================================================================
+# GatewayClass
+# =============================================================================
+# Defines the controller that manages Gateways
+# Must exist before any Gateway resources
+# =============================================================================
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: eg
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+# =============================================================================
+# Gateway — Main Ingress
+# =============================================================================
+# Single gateway handles all ingress traffic
+# Gets IP 192.168.1.200 from MetalLB (fixed)
+# *.darktang3nt.cloud → 192.168.1.200 → this gateway → pods
+#
+# TLS termination:
+#   - Uses wildcard cert from cert-manager (darktang3nt-tls secret)
+#   - All HTTPS traffic decrypted here
+#   - Internal pod traffic is HTTP (Istio handles mTLS later)
+# =============================================================================
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: homelab-gateway
+  namespace: envoy-gateway-system
+  annotations:
+    # fix the LoadBalancer IP so DNS always points to the right place
+    # *.darktang3nt.cloud A record = 192.168.1.200
+    metallb.universe.tf/loadBalancerIPs: "192.168.1.200"
+spec:
+  gatewayClassName: eg
+  listeners:
+    # HTTP listener — redirects to HTTPS
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
+    # HTTPS listener — TLS termination with wildcard cert
+    - name: https
+      protocol: HTTPS
+      port: 443
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          # wildcard cert issued by cert-manager
+          # Secret: darktang3nt-tls in cert-manager namespace
+          - name: darktang3nt-tls
+            namespace: cert-manager
+            kind: Secret

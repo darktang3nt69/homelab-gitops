@@ -1,0 +1,84 @@
+---
+# =============================================================================
+# Cloudflare API Token Secret
+# =============================================================================
+# IMPORTANT: This secret must be created MANUALLY before cert-manager-config
+# syncs. It is NOT in Git (never commit secrets to Git).
+#
+# Create it with:
+#   kubectl create secret generic cloudflare-api-token \
+#     --from-literal=api-token=<YOUR_CLOUDFLARE_API_TOKEN> \
+#     -n cert-manager
+#
+# Cloudflare API token requirements:
+#   - Zone → DNS → Edit (for darktang3nt.cloud zone only)
+#   - Zone → Zone → Read
+#
+# Why DNS-01 challenge:
+#   - Let's Encrypt verifies domain ownership via a DNS TXT record
+#   - cert-manager creates the TXT record via Cloudflare API
+#   - Server never needs to be publicly reachable (works behind Twingate)
+#   - Required for wildcard certs (HTTP-01 cannot issue wildcards)
+# =============================================================================
+---
+# =============================================================================
+# ClusterIssuer — Let's Encrypt Production
+# =============================================================================
+# Uses DNS-01 challenge via Cloudflare API
+# Issues wildcard cert for *.darktang3nt.cloud
+# ClusterIssuer (not Issuer) = available across all namespaces
+# =============================================================================
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Let's Encrypt production — real trusted certs
+    # Use staging first to test: https://acme-staging-v02.api.letsencrypt.org/directory
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Replace with your email — Let's Encrypt sends expiry warnings here
+    email: lokesh@darktang3nt.cloud
+    privateKeySecretRef:
+      # ArgoCD stores the ACME account private key here
+      name: letsencrypt-prod-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            # API token from cloudflare-api-token secret
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+---
+# =============================================================================
+# Wildcard Certificate — *.darktang3nt.cloud
+# =============================================================================
+# One cert covers ALL subdomains:
+#   jellyfin.darktang3nt.cloud
+#   sonarr.darktang3nt.cloud
+#   grafana.darktang3nt.cloud
+#   ... etc
+#
+# cert-manager auto-renews 15 days before expiry (Let's Encrypt = 90 days)
+# Stored as k8s Secret: darktang3nt-tls in cert-manager namespace
+# Envoy Gateway references this secret for TLS termination
+# =============================================================================
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-darktang3nt
+  namespace: cert-manager
+spec:
+  # secret name — Envoy Gateway will reference this
+  secretName: darktang3nt-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  # wildcard covers all subdomains
+  dnsNames:
+    - "darktang3nt.cloud"
+    - "*.darktang3nt.cloud"
+  # Let's Encrypt max is 90 days
+  duration: 2160h
+  # renew 15 days before expiry — plenty of buffer
+  renewBefore: 360h

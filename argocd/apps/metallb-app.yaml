@@ -1,0 +1,74 @@
+---
+# =============================================================================
+# MetalLB — ArgoCD Application
+# =============================================================================
+# Installs MetalLB from official Helm chart
+# L2 mode — ARP based, works on flat LAN, no BGP needed
+# Must deploy BEFORE ip-config (which needs MetalLB CRDs)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metallb
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://metallb.github.io/metallb
+    chart: metallb
+    targetRevision: 0.14.9
+    helm:
+      values: |
+        speaker:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: metallb-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# MetalLB IP Config — ArgoCD Application
+# =============================================================================
+# Applies IPAddressPool + L2Advertisement CRs
+# Must deploy AFTER metallb (needs MetalLB CRDs to exist first)
+# Reserved:
+#   192.168.1.200 → Envoy Gateway (fixed — wildcard DNS points here)
+#   192.168.1.150-199, 201-220 → general pool
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metallb-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/metallb
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: metallb-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

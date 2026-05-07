@@ -1,0 +1,76 @@
+---
+# =============================================================================
+# Longhorn — ArgoCD Application
+# =============================================================================
+# Installs Longhorn block storage from official Helm chart
+# Data path: /mnt/data/longhorn (HDD — sda)
+# Replicas: 1 now → bump to 2 when Orange Pi joins as worker
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: longhorn
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://charts.longhorn.io
+    chart: longhorn
+    targetRevision: 1.8.1
+    helm:
+      values: |
+        defaultSettings:
+          # HDD mount path — where Longhorn stores all volume data
+          # /mnt/data/longhorn is on sda (931.5GB HDD)
+          defaultDataPath: /mnt/data/longhorn
+
+          # single node for now — bump to 2 when Orange Pi joins
+          # 2 replicas = data survives one node failure
+          defaultReplicaCount: 1
+
+          # allow scheduling on control-plane node (single node setup)
+          # remove this taint exception when Orange Pi joins as worker
+          taintToleration: "node-role.kubernetes.io/control-plane:NoSchedule"
+
+          # storage reserved for Longhorn system operations
+          storageReservedPercentageForDefaultDisk: 10
+
+          # auto-delete completed backup jobs
+          autoDeletePodWhenVolumeDetachedUnexpectedly: true
+
+          # take snapshot before upgrading volumes
+          upgradeChecker: false   # disable phone-home upgrade checks
+
+        persistence:
+          # make Longhorn the default storage class
+          defaultClass: true
+          defaultClassReplicaCount: 1
+
+        ingress:
+          # expose Longhorn UI — Envoy Gateway handles routing
+          enabled: false   # we'll add ingress separately via Envoy Gateway
+
+        longhornUI:
+          # Longhorn dashboard — accessible via Twingate
+          # URL: longhorn.darktang3nt.cloud
+          replicas: 1
+
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: longhorn-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

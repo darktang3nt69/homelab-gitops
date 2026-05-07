@@ -1,0 +1,35 @@
+---
+# =============================================================================
+# Root App of Apps
+# =============================================================================
+# This is the entry point for all ArgoCD applications.
+# Apply this ONCE manually after connecting the repo:
+#
+#   kubectl apply -f argocd/apps/root-app.yaml
+#
+# After this, adding a new app = add an Application manifest to argocd/apps/
+# ArgoCD auto-discovers and deploys it. Never manually apply again.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    # watches argocd/apps/ — every yaml here becomes an ArgoCD app
+    path: argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true       # remove apps deleted from Git
+      selfHeal: true    # revert manual kubectl changes
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,22 @@
+---
+# =============================================================================
+# ArgoCD Repository Connection
+# =============================================================================
+# Apply this ONCE manually to connect ArgoCD to the homelab-gitops repo:
+#
+#   kubectl apply -f bootstrap/argocd-repos.yaml
+#
+# After this, everything else is managed via Git → ArgoCD
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: homelab-gitops-repo
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+type: Opaque
+stringData:
+  # public repo — no credentials needed
+  type: git
+  url: https://github.com/darktang3nt69/homelab-gitops

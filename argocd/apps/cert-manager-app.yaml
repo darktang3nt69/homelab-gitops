@@ -1,0 +1,78 @@
+---
+# =============================================================================
+# cert-manager — ArgoCD Application
+# =============================================================================
+# Installs cert-manager from official Helm chart
+# Handles TLS certificate lifecycle — issue, renew, store as k8s Secrets
+# Must deploy BEFORE cluster-issuer (which needs cert-manager CRDs)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.17.2
+    helm:
+      values: |
+        # install CRDs as part of Helm chart
+        # Why: ensures CRDs exist before any Certificate/Issuer resources
+        crds:
+          enabled: true
+        # enable prometheus metrics scraping
+        prometheus:
+          enabled: true
+          servicemonitor:
+            enabled: false   # enable when monitoring stack is deployed
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# cert-manager Config — ArgoCD Application
+# =============================================================================
+# Applies ClusterIssuer + wildcard Certificate
+# Must deploy AFTER cert-manager (needs CRDs + controller running)
+# Uses DNS-01 challenge via Cloudflare API
+# Why DNS-01: server doesn't need to be publicly reachable
+#             works for internal services accessed via Twingate
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/cert-manager
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

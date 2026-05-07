@@ -1,0 +1,81 @@
+---
+# =============================================================================
+# Envoy Gateway — ArgoCD Application
+# =============================================================================
+# Installs Envoy Gateway as the cluster ingress controller
+# Handles North-South traffic: external → cluster services
+# Gets a fixed LoadBalancer IP from MetalLB: 192.168.1.200
+# *.darktang3nt.cloud A record points to 192.168.1.200
+# TLS termination using wildcard cert from cert-manager
+#
+# Requires:
+#   - MetalLB running (for LoadBalancer IP assignment)
+#   - cert-manager running (for TLS cert)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: envoy-gateway
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://charts.gateway.envoyproxy.io
+    chart: gateway-helm
+    targetRevision: v1.4.1
+    helm:
+      values: |
+        config:
+          envoyGateway:
+            gateway:
+              controllerName: gateway.envoyproxy.io/gatewayclass-controller
+            provider:
+              type: Kubernetes
+            logging:
+              level:
+                default: info
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: envoy-gateway-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# Envoy Gateway Config — ArgoCD Application
+# =============================================================================
+# Applies GatewayClass + Gateway + fixed IP annotation
+# Must deploy AFTER envoy-gateway (needs CRDs)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: envoy-gateway-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/envoy-gateway
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: envoy-gateway-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

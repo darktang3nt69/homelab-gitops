@@ -1,0 +1,36 @@
+---
+# =============================================================================
+# MetalLB IP Address Pool
+# =============================================================================
+# Pool range: 192.168.1.150 - 192.168.1.220
+# These IPs must be outside your router DHCP range
+#
+# Reserved allocations:
+#   192.168.1.200 → Envoy Gateway (fixed)
+#                   *.darktang3nt.cloud A record points here
+#                   All Twingate-accessed services route through this IP
+# =============================================================================
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: homelab-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 192.168.1.150-192.168.1.220
+---
+# =============================================================================
+# MetalLB L2 Advertisement
+# =============================================================================
+# Uses ARP to announce IPs from homelab-pool
+# When a pod needs a LoadBalancer IP, MetalLB responds to ARP requests
+# from LAN for that IP — no BGP, no special router config needed
+# =============================================================================
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: homelab-l2
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - homelab-pool
