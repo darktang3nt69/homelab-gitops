@@ -58,3 +58,4 @@ spec:
           - name: darktang3nt-tls
             namespace: cert-manager
             kind: Secret
+            group: ""
