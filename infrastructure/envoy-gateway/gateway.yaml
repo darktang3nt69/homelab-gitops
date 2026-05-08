@@ -32,7 +32,7 @@ metadata:
   annotations:
     # fix the LoadBalancer IP so DNS always points to the right place
     # *.darktang3nt.cloud A record = 192.168.1.200
-    metallb.universe.tf/loadBalancerIPs: "192.168.1.200"
+    metallb.io/loadBalancerIPs: "192.168.1.200"
 spec:
   gatewayClassName: eg
   listeners:
