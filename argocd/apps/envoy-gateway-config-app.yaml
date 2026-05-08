@@ -1,0 +1,38 @@
+---
+# =============================================================================
+# Envoy Gateway Config — ArgoCD Application
+# =============================================================================
+# Deploys GatewayClass and Gateway resources AFTER the Envoy Gateway Helm
+# chart (sync-wave 3) has installed the gateway.networking.k8s.io CRDs.
+#
+# Sync wave ordering:
+#   wave 1 — metallb
+#   wave 2 — cert-manager
+#   wave 3 — envoy-gateway (Helm chart + CRDs)
+#   wave 4 — envoy-gateway-config (GatewayClass, Gateway)  ← this app
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: envoy-gateway-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/envoy-gateway
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: envoy-gateway-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
