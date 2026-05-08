@@ -38,7 +38,7 @@ spec:
     # Use staging first to test: https://acme-staging-v02.api.letsencrypt.org/directory
     server: https://acme-v02.api.letsencrypt.org/directory
     # Replace with your email — Let's Encrypt sends expiry warnings here
-    email: lokesh@darktang3nt.cloud
+    email: lokeshreddy19997@gmail.com
     privateKeySecretRef:
       # ArgoCD stores the ACME account private key here
       name: letsencrypt-prod-account-key
@@ -78,6 +78,8 @@ spec:
   dnsNames:
     - "darktang3nt.cloud"
     - "*.darktang3nt.cloud"
+    - "k8s.darktang3nt.cloud"
+    - "*.k8s.darktang3nt.cloud"
   # Let's Encrypt max is 90 days
   duration: 2160h
   # renew 15 days before expiry — plenty of buffer
