@@ -1,0 +1,220 @@
+---
+# =============================================================================
+# Vault — ArgoCD Application
+# =============================================================================
+# HashiCorp Vault in HA Raft mode
+# Auto-unseal: AWS KMS (ap-south-1)
+# Storage: Longhorn PVC (5GB on HDD)
+# Auth: Kubernetes ServiceAccount tokens
+# Secrets: via External Secrets Operator
+# UI: vault.k8s.darktang3nt.cloud (Twingate only)
+#
+# Deploy order:
+#   Wave 1: Vault Helm chart
+#   Wave 2: HTTPRoute (after Vault pod is running)
+#
+# IMPORTANT: Before pushing this to Git:
+#   1. Create namespace: kubectl create namespace security
+#   2. Create KMS secret: see infrastructure/vault/VAULT-SETUP.md
+#   3. Push to Git → ArgoCD deploys
+#   4. Follow VAULT-SETUP.md for manual init steps
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://helm.releases.hashicorp.com
+    chart: vault
+    targetRevision: 0.32.0
+    helm:
+      values: |
+        global:
+          # TLS disabled between Vault pods
+          # Istio ambient will handle mTLS between pods in Phase 2
+          tlsDisable: true
+
+        injector:
+          # Vault Agent Injector disabled
+          # We use External Secrets Operator instead — cleaner for GitOps
+          # ESO pulls secrets from Vault and creates k8s Secrets
+          # No sidecar injection needed
+          enabled: false
+
+        server:
+          # ── Image ────────────────────────────────────────────────────────
+          image:
+            repository: hashicorp/vault
+            tag: "1.21.2"
+
+          # ── Resources ────────────────────────────────────────────────────
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 250m
+            limits:
+              memory: 512Mi
+              cpu: 500m
+
+          # ── AWS KMS Auto-Unseal Credentials ──────────────────────────────
+          # All values come from vault-kms-credentials secret
+          # Secret must exist in security namespace BEFORE ArgoCD syncs
+          # Create with: kubectl create secret generic vault-kms-credentials
+          # See infrastructure/vault/VAULT-SETUP.md for full command
+          # Nothing sensitive is hardcoded here or in Git
+          extraSecretEnvironmentVars:
+            - envName: AWS_ACCESS_KEY_ID
+              secretName: vault-kms-credentials
+              secretKey: AWS_ACCESS_KEY_ID
+            - envName: AWS_SECRET_ACCESS_KEY
+              secretName: vault-kms-credentials
+              secretKey: AWS_SECRET_ACCESS_KEY
+            - envName: VAULT_AWSKMS_SEAL_KEY_ID
+              secretName: vault-kms-credentials
+              secretKey: KMS_KEY_ID
+            - envName: AWS_REGION
+              secretName: vault-kms-credentials
+              secretKey: AWS_REGION
+
+          # ── HA Raft Mode ─────────────────────────────────────────────────
+          ha:
+            enabled: true
+            # Single replica now
+            # Increase to 3 when Orange Pi joins as worker node
+            # Raft requires odd number of nodes for quorum (1, 3, 5)
+            replicas: 1
+            raft:
+              enabled: true       # integrated storage — no Consul needed
+              setNodeId: true     # use pod name as Raft node ID
+              config: |
+                ui = true
+
+                listener "tcp" {
+                  tls_disable     = 1
+                  address         = "[::]:8200"
+                  cluster_address = "[::]:8201"
+
+                  # expose metrics for Prometheus scraping
+                  telemetry {
+                    unauthenticated_metrics_access = "true"
+                  }
+                }
+
+                storage "raft" {
+                  path    = "/vault/data"
+                  node_id = "vault-0"
+                }
+
+                # AWS KMS auto-unseal
+                # kms_key_id read from VAULT_AWSKMS_SEAL_KEY_ID env var
+                # region read from AWS_REGION env var
+                # Nothing hardcoded — all from vault-kms-credentials secret
+                seal "awskms" {
+                  region = "ap-south-1"
+                }
+
+                # register with k8s for health checks + pod readiness
+                service_registration "kubernetes" {}
+
+          # ── Persistent Storage ───────────────────────────────────────────
+          dataStorage:
+            enabled: true
+            size: 5Gi
+            storageClass: longhorn      # Longhorn PVC on HDD (sda)
+            accessMode: ReadWriteOnce
+
+          # ── Audit Log Storage ────────────────────────────────────────────
+          # Audit logs record every secret read/write/delete
+          # Promtail ships these to Loki when monitoring stack is deployed
+          auditStorage:
+            enabled: true
+            size: 2Gi
+            storageClass: longhorn
+            accessMode: ReadWriteOnce
+
+          # ── Scheduling ───────────────────────────────────────────────────
+          # Remove default anti-affinity — single node setup
+          # Default chart spreads pods across nodes which causes pending
+          # on a single node cluster
+          affinity: ""
+
+          # Allow scheduling on control-plane node (single node)
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+          # ── Service Account ──────────────────────────────────────────────
+          # Used by Kubernetes auth method
+          # ESO authenticates to Vault using this ServiceAccount token
+          serviceAccount:
+            create: true
+            name: vault
+
+          # ── Health Checks ────────────────────────────────────────────────
+          # standbyok=true: standby nodes return 200 (not 429)
+          # sealedcode=204: sealed vault returns 204 not 503
+          # uninitcode=204: uninitialized vault returns 204 not 503
+          readinessProbe:
+            enabled: true
+            path: "/v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204"
+          livenessProbe:
+            enabled: true
+            path: "/v1/sys/health?standbyok=true"
+            initialDelaySeconds: 60
+
+        # ── Vault UI ──────────────────────────────────────────────────────
+        ui:
+          enabled: true
+          # ClusterIP — exposed via Envoy Gateway HTTPRoute
+          # Accessible at: vault.k8s.darktang3nt.cloud (Twingate only)
+          serviceType: ClusterIP
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: security
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# Vault Config — ArgoCD Application
+# =============================================================================
+# Applies HTTPRoute to expose Vault UI via Envoy Gateway
+# Wave 2 — runs after Vault pod is running
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/vault
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: security
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
