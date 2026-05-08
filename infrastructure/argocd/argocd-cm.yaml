@@ -1,0 +1,22 @@
+---
+# =============================================================================
+# ArgoCD ConfigMap Customizations
+# =============================================================================
+# Applied manually or via an ArgoCD app watching infrastructure/argocd/
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+data:
+  # Exclude Cilium runtime objects that are auto-created by the CNI and
+  # are not managed via Git — prevents false OutOfSync noise.
+  resource.exclusions: |
+    - apiGroups:
+      - cilium.io
+      kinds:
+      - CiliumIdentity
+      - CiliumEndpoint
+      clusters:
+      - "*"
