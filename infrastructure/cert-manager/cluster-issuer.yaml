@@ -78,7 +78,6 @@ spec:
   dnsNames:
     - "darktang3nt.cloud"
     - "*.darktang3nt.cloud"
-    - "k8s.darktang3nt.cloud"
     - "*.k8s.darktang3nt.cloud"
   # Let's Encrypt max is 90 days
   duration: 2160h
