@@ -43,3 +43,8 @@ spec:
         - /status
         - /metadata/annotations
         - /metadata/finalizers
+    - group: ""
+      kind: Service
+      jsonPointers:
+        - /spec/ports/0/nodePort
+        - /status/loadBalancer
