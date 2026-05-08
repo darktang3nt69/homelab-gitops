@@ -1,0 +1,14 @@
+---
+# =============================================================================
+# Local Path Storage Class Patch
+# =============================================================================
+# Removes the default StorageClass annotation from k3s's local-path storage
+# so it is not used as the default for PVCs without explicit StorageClass
+# =============================================================================
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+  namespace: local-path-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
