@@ -57,4 +57,5 @@ spec:
           # Secret: darktang3nt-tls in cert-manager namespace
           - name: darktang3nt-tls
             namespace: cert-manager
+            group: ""
             kind: Secret
