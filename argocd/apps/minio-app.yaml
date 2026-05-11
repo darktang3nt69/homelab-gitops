@@ -3,23 +3,19 @@
 # MinIO — ArgoCD Application
 # =============================================================================
 # Standalone MinIO S3-compatible object storage
-# Purpose: Velero backup destination + Longhorn backup target
+# Purpose: Velero + Longhorn + Loki + Tempo backup/storage target
 # Storage: HostPath on /mnt/data/minio (HDD — sda)
 # Credentials: from Vault via ESO
-#
-# Why Bitnami chart over MinIO Operator:
-#   Operator is for multi-tenant enterprise deployments
-#   Standalone Bitnami chart = simpler, right-sized for homelab
-#   Single pod, single PVC, S3-compatible API
+# Chart: official MinIO chart (not Bitnami — image issues)
 #
 # Wave 1: MinIO Helm chart
-# Wave 2: MinIO config (buckets, HTTPRoute)
+# Wave 2: MinIO config (PVC, ExternalSecret, HTTPRoutes)
 #
-# IMPORTANT: Before pushing to Git, create MinIO credentials in Vault:
-#   vault kv put secret/minio/root-credentials \
-#     root-user=minioadmin \
-#     root-password=<strong-password>
-# Then create ExternalSecret — see infrastructure/minio/external-secret.yaml
+# IMPORTANT: Before pushing to Git, store credentials in Vault:
+#   kubectl exec -it vault-0 -n security -- \
+#     vault kv put secret/minio/root-credentials \
+#       root-user=minioadmin \
+#       root-password=<strong-password>
 # =============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -38,24 +34,38 @@ spec:
     targetRevision: 5.4.0
     helm:
       values: |
-        # ── Auth ─────────────────────────────────────────────────────────────
-        auth:
-          # credentials come from k8s Secret (managed by ESO from Vault)
-          # secret must exist before ArgoCD syncs this app
-          existingSecret: minio-credentials
-          rootUserSecretKey: root-user
-          rootPasswordSecretKey: root-password
-
         # ── Mode ─────────────────────────────────────────────────────────────
-        # standalone mode — single pod, simple, right for homelab
         mode: standalone
 
+        # ── Auth ─────────────────────────────────────────────────────────────
+        # credentials from k8s Secret managed by ESO from Vault
+        # secret must exist before ArgoCD syncs this app
+        existingSecret: minio-credentials
+
         # ── Storage ──────────────────────────────────────────────────────────
+        # use existing PVC backed by HostPath /mnt/data/minio
+        # HostPath chosen over Longhorn:
+        #   MinIO IS the backup target — must work even if Longhorn fails
+        #   No circular dependency (Velero backs up Longhorn using MinIO)
         persistence:
           enabled: true
-          # use existing PVC backed by HostPath
-          # /mnt/data/minio is already created on HDD (sda)
           existingClaim: minio-data-pvc
+
+        # ── Buckets ──────────────────────────────────────────────────────────
+        # created at pod startup automatically
+        buckets:
+          - name: velero
+            policy: none
+            purge: false
+          - name: longhorn-backups
+            policy: none
+            purge: false
+          - name: loki
+            policy: none
+            purge: false
+          - name: tempo
+            policy: none
+            purge: false
 
         # ── Resources ────────────────────────────────────────────────────────
         resources:
@@ -66,34 +76,27 @@ spec:
             memory: 512Mi
             cpu: 500m
 
-        # ── Buckets ──────────────────────────────────────────────────────────
-        # create buckets at startup
-        defaultBuckets: "velero,longhorn-backups,loki,tempo"
-
-        # ── Service ──────────────────────────────────────────────────────────
+        # ── Services ─────────────────────────────────────────────────────────
+        # S3 API — used by Velero, Longhorn, Loki, Tempo
         service:
           type: ClusterIP
-          port: 9000        # S3 API port
+          port: 9000
 
-        # ── Console ──────────────────────────────────────────────────────────
-        # MinIO console runs as separate deployment in newer versions
-        # exposed via Envoy Gateway at minio.k8s.darktang3nt.cloud
-        console:
-          enabled: true
-          service:
-            type: ClusterIP
-            port: 9001      # console UI port
-
-        # ── Metrics ──────────────────────────────────────────────────────────
-        metrics:
-          serviceMonitor:
-            enabled: false  # enable when monitoring stack is deployed
+        # Console UI — exposed via HTTPRoute
+        consoleService:
+          type: ClusterIP
+          port: 9001
 
         # ── Scheduling ───────────────────────────────────────────────────────
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             effect: NoSchedule
             operator: Exists
+
+        # ── Metrics ──────────────────────────────────────────────────────────
+        metrics:
+          serviceMonitor:
+            enabled: false   # enable when kube-prometheus-stack is deployed
 
   destination:
     server: https://kubernetes.default.svc
@@ -109,8 +112,8 @@ spec:
 # =============================================================================
 # MinIO Config — ArgoCD Application
 # =============================================================================
-# Applies PVC, ExternalSecret, HTTPRoute
-# Wave 2 — after MinIO Helm chart (wave 1)
+# Applies PVC, ExternalSecret, HTTPRoutes
+# Wave 2 — after MinIO pod is running (wave 1)
 # =============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
