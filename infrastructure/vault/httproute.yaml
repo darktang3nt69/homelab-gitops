@@ -13,7 +13,9 @@ metadata:
   namespace: security
 spec:
   parentRefs:
-    - name: homelab-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: homelab-gateway
       namespace: envoy-gateway-system
   hostnames:
     - "vault.k8s.darktang3nt.cloud"
@@ -23,6 +25,9 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: vault-ui
+        - group: ""
+          kind: Service
+          name: vault-ui
           namespace: security
           port: 8200
+          weight: 1
