@@ -1,5 +1,5 @@
 # =============================================================================
-# Longhorn BackupStore — MinIO S3
+# Longhorn BackupTarget — MinIO S3
 # =============================================================================
 # Configures Longhorn to use MinIO S3 object storage for volume backups
 # 
@@ -10,10 +10,10 @@
 # TLS: disabled — MinIO pod uses HTTP internally
 #      (TLS termination happens at Envoy Gateway for external access)
 # 
-# BackupStore is automatically set as default backup target for all volumes
+# BackupTarget is automatically set as default backup target for all volumes
 # =============================================================================
 apiVersion: longhorn.io/v1beta1
-kind: BackupStore
+kind: BackupTarget
 metadata:
   name: minio
   namespace: longhorn-system
