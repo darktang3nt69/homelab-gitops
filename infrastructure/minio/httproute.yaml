@@ -12,7 +12,9 @@ metadata:
   namespace: storage
 spec:
   parentRefs:
-    - name: homelab-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: homelab-gateway
       namespace: envoy-gateway-system
   hostnames:
     - "s3.k8s.darktang3nt.cloud"
@@ -22,9 +24,12 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: minio
+        - group: ""
+          kind: Service
+          name: minio
           namespace: storage
           port: 9000
+          weight: 1
 ---
 # =============================================================================
 # MinIO Console — HTTPRoute
@@ -40,7 +45,9 @@ metadata:
   namespace: storage
 spec:
   parentRefs:
-    - name: homelab-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: homelab-gateway
       namespace: envoy-gateway-system
   hostnames:
     - "minio.k8s.darktang3nt.cloud"
@@ -50,6 +57,9 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: minio-console
+        - group: ""
+          kind: Service
+          name: minio-console
           namespace: storage
           port: 9001
+          weight: 1

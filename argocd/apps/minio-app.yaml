@@ -93,6 +93,12 @@ spec:
             effect: NoSchedule
             operator: Exists
 
+        # ── Environment ──────────────────────────────────────────────────────
+        # Required when behind TLS-terminating reverse proxy (Envoy Gateway).
+        # Without this, MinIO console redirects to http:// after login, breaking auth.
+        environment:
+          MINIO_BROWSER_REDIRECT_URL: "https://minio.k8s.darktang3nt.cloud"
+
         # ── Metrics ──────────────────────────────────────────────────────────
         metrics:
           serviceMonitor:
