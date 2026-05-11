@@ -1,0 +1,32 @@
+---
+# =============================================================================
+# ArgoCD — HTTPRoute
+# =============================================================================
+# Exposes ArgoCD UI at argocd.k8s.darktang3nt.cloud
+# Accessible via Twingate only (not public)
+# TLS terminated at Envoy Gateway using wildcard cert
+#
+# Note: ArgoCD server must run in insecure mode (--insecure flag) or
+# the backend service must be http not https
+# argocd-server service port 80 = HTTP (insecure mode)
+# =============================================================================
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  parentRefs:
+    - name: homelab-gateway
+      namespace: envoy-gateway-system
+  hostnames:
+    - "argocd.k8s.darktang3nt.cloud"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: argocd-server
+          namespace: argocd
+          port: 80
