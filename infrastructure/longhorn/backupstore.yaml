@@ -18,20 +18,10 @@ metadata:
   name: minio
   namespace: longhorn-system
 spec:
-  backupStorageType: s3
-  s3BackupStore:
-    # Internal cluster DNS to MinIO service in storage namespace
-    endpoint: minio.storage:9000
-    
-    # S3 bucket for Longhorn backups
-    bucketName: longhorn-backups
-    
-    # k8s Secret containing AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-    # Secret is managed by ESO and pulls from Vault at runtime
-    secretName: longhorn-minio-credentials
-    
-    # HTTP only — TLS not used for internal pod-to-pod communication
-    ssl: false
-    
-    # Path within bucket
-    backupStoragePath: /
+  # Longhorn uses AWS SDK internally — URL is s3://bucket@region/path
+  # The actual MinIO endpoint is set via AWS_ENDPOINTS in the credential secret
+  backupTargetURL: s3://longhorn-backups@us-east-1/
+  
+  # k8s Secret containing AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_ENDPOINTS
+  # Secret is managed by ESO and pulls from Vault at runtime
+  credentialSecret: longhorn-minio-credentials
