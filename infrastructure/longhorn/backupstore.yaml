@@ -12,10 +12,10 @@
 # 
 # BackupTarget is automatically set as default backup target for all volumes
 # =============================================================================
-apiVersion: longhorn.io/v1beta1
+apiVersion: longhorn.io/v1beta2
 kind: BackupTarget
 metadata:
-  name: minio
+  name: default
   namespace: longhorn-system
 spec:
   # Longhorn uses AWS SDK internally — URL is s3://bucket@region/path
