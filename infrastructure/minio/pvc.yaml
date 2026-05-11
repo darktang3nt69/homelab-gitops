@@ -1,0 +1,39 @@
+---
+# =============================================================================
+# MinIO PVC — HostPath on HDD
+# =============================================================================
+# Uses /mnt/data/minio directory on HDD (sda, 931.5GB)
+# HostPath chosen over Longhorn because:
+#   - MinIO IS the backup target — if Longhorn fails, MinIO must still work
+#   - Direct HDD access = faster backup writes
+#   - No circular dependency (Velero backs up Longhorn using MinIO)
+# Directory already created: /mnt/data/minio
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-data-pv
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /mnt/data/minio
+    type: Directory
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data-pvc
+  namespace: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 50Gi
+  volumeName: minio-data-pv

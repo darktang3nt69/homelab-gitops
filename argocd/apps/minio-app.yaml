@@ -1,0 +1,138 @@
+---
+# =============================================================================
+# MinIO — ArgoCD Application
+# =============================================================================
+# Standalone MinIO S3-compatible object storage
+# Purpose: Velero backup destination + Longhorn backup target
+# Storage: HostPath on /mnt/data/minio (HDD — sda)
+# Credentials: from Vault via ESO
+#
+# Why Bitnami chart over MinIO Operator:
+#   Operator is for multi-tenant enterprise deployments
+#   Standalone Bitnami chart = simpler, right-sized for homelab
+#   Single pod, single PVC, S3-compatible API
+#
+# Wave 1: MinIO Helm chart
+# Wave 2: MinIO config (buckets, HTTPRoute)
+#
+# IMPORTANT: Before pushing to Git, create MinIO credentials in Vault:
+#   vault kv put secret/minio/root-credentials \
+#     root-user=minioadmin \
+#     root-password=<strong-password>
+# Then create ExternalSecret — see infrastructure/minio/external-secret.yaml
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: minio
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: registry-1.docker.io/bitnamicharts
+    chart: minio
+    targetRevision: 17.0.21
+    helm:
+      values: |
+        # ── Auth ─────────────────────────────────────────────────────────────
+        auth:
+          # credentials come from k8s Secret (managed by ESO from Vault)
+          # secret must exist before ArgoCD syncs this app
+          existingSecret: minio-credentials
+          rootUserSecretKey: root-user
+          rootPasswordSecretKey: root-password
+
+        # ── Mode ─────────────────────────────────────────────────────────────
+        # standalone mode — single pod, simple, right for homelab
+        mode: standalone
+
+        # ── Storage ──────────────────────────────────────────────────────────
+        persistence:
+          enabled: true
+          # use existing PVC backed by HostPath
+          # /mnt/data/minio is already created on HDD (sda)
+          existingClaim: minio-data-pvc
+
+        # ── Resources ────────────────────────────────────────────────────────
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+
+        # ── Buckets ──────────────────────────────────────────────────────────
+        # create buckets at startup
+        defaultBuckets: "velero,longhorn-backups,loki,tempo"
+
+        # ── Service ──────────────────────────────────────────────────────────
+        service:
+          type: ClusterIP
+          port: 9000        # S3 API port
+
+        # ── Console ──────────────────────────────────────────────────────────
+        # MinIO console runs as separate deployment in newer versions
+        # exposed via Envoy Gateway at minio.k8s.darktang3nt.cloud
+        console:
+          enabled: true
+          service:
+            type: ClusterIP
+            port: 9001      # console UI port
+
+        # ── Metrics ──────────────────────────────────────────────────────────
+        metrics:
+          serviceMonitor:
+            enabled: false  # enable when monitoring stack is deployed
+
+        # ── Scheduling ───────────────────────────────────────────────────────
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: storage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# MinIO Config — ArgoCD Application
+# =============================================================================
+# Applies PVC, ExternalSecret, HTTPRoute
+# Wave 2 — after MinIO Helm chart (wave 1)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: minio-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/minio
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: storage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
