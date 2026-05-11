@@ -1,0 +1,37 @@
+# =============================================================================
+# Longhorn BackupStore — MinIO S3
+# =============================================================================
+# Configures Longhorn to use MinIO S3 object storage for volume backups
+# 
+# Backup Target: MinIO S3-compatible storage
+# Bucket: longhorn-backups
+# Endpoint: minio.storage:9000 (internal cluster DNS)
+# Credentials: from k8s Secret managed by ESO (pulls from Vault)
+# TLS: disabled — MinIO pod uses HTTP internally
+#      (TLS termination happens at Envoy Gateway for external access)
+# 
+# BackupStore is automatically set as default backup target for all volumes
+# =============================================================================
+apiVersion: longhorn.io/v1beta1
+kind: BackupStore
+metadata:
+  name: minio
+  namespace: longhorn-system
+spec:
+  backupStorageType: s3
+  s3BackupStore:
+    # Internal cluster DNS to MinIO service in storage namespace
+    endpoint: minio.storage:9000
+    
+    # S3 bucket for Longhorn backups
+    bucketName: longhorn-backups
+    
+    # k8s Secret containing AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+    # Secret is managed by ESO and pulls from Vault at runtime
+    secretName: longhorn-minio-credentials
+    
+    # HTTP only — TLS not used for internal pod-to-pod communication
+    ssl: false
+    
+    # Path within bucket
+    backupStoragePath: /
