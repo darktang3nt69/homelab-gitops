@@ -2,12 +2,6 @@
 # =============================================================================
 # Loki — ArgoCD Application
 # =============================================================================
-# Log aggregation — collects logs from all pods via Promtail
-# Storage: MinIO loki bucket (long-term) + Longhorn (cache)
-# Mode: monolithic (single pod, right-sized for homelab)
-# Wave 1: Loki Helm chart
-# Wave 2: Config (ExternalSecret + HTTPRoute)
-# =============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -25,16 +19,14 @@ spec:
     targetRevision: 6.30.1
     helm:
       values: |
-        # monolithic mode — single pod, right for homelab
         deploymentMode: SingleBinary
 
         loki:
-          auth_enabled: false   # single tenant homelab
+          auth_enabled: false
 
           commonConfig:
-            replication_factor: 1   # single node
+            replication_factor: 1
 
-          # S3-compatible storage via MinIO
           storage:
             type: s3
             bucketNames:
@@ -44,12 +36,13 @@ spec:
             s3:
               endpoint: http://minio.storage:9000
               region: us-east-1
-              secretAccessKey: ${LOKI_S3_SECRET_KEY}
-              accessKeyId: ${LOKI_S3_ACCESS_KEY}
+              # credentials injected via AWS env vars — not inline
+              # Loki reads AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY natively
+              secretAccessKey: ""
+              accessKeyId: ""
               s3ForcePathStyle: true
               insecure: true
 
-          # schema config
           schemaConfig:
             configs:
               - from: "2024-01-01"
@@ -60,29 +53,27 @@ spec:
                   prefix: loki_index_
                   period: 24h
 
-          # retention — 30 days
           limits_config:
             retention_period: 720h
             ingestion_rate_mb: 16
             ingestion_burst_size_mb: 32
 
-          # compactor for retention enforcement
           compactor:
             retention_enabled: true
             delete_request_store: s3
 
-        # single binary deployment
         singleBinary:
           replicas: 1
 
-          # S3 credentials from secret
+          # inject credentials via AWS standard env vars
+          # Loki S3 client reads these automatically
           extraEnv:
-            - name: LOKI_S3_ACCESS_KEY
+            - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: loki-minio-credentials
                   key: access-key
-            - name: LOKI_S3_SECRET_KEY
+            - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: loki-minio-credentials
@@ -91,7 +82,7 @@ spec:
           persistence:
             enabled: true
             storageClass: longhorn
-            size: 5Gi      # cache only — long term in MinIO
+            size: 5Gi
 
           tolerations:
             - key: node-role.kubernetes.io/control-plane
@@ -106,7 +97,6 @@ spec:
               memory: 512Mi
               cpu: 500m
 
-        # disable components not needed in single binary mode
         read:
           replicas: 0
         write:
@@ -114,12 +104,6 @@ spec:
         backend:
           replicas: 0
 
-        # Promtail — log shipper DaemonSet
-        # Runs on every node, tails pod logs, ships to Loki
-        promtail:
-          enabled: false   # deploy separately for more control
-
-        # gateway — nginx proxy for Loki API
         gateway:
           enabled: true
           replicas: 1
@@ -128,12 +112,11 @@ spec:
               effect: NoSchedule
               operator: Exists
 
-        # metrics
         monitoring:
           serviceMonitor:
             enabled: true
             labels:
-              release: prometheus   # matches kube-prometheus-stack selector
+              release: prometheus
 
   destination:
     server: https://kubernetes.default.svc
@@ -148,9 +131,6 @@ spec:
 ---
 # =============================================================================
 # Promtail — ArgoCD Application
-# =============================================================================
-# DaemonSet that ships pod logs to Loki
-# Runs on every node — tails /var/log/pods/*
 # =============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -170,11 +150,8 @@ spec:
     helm:
       values: |
         config:
-          # send to Loki gateway
           clients:
             - url: http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
-
-          # scrape pod logs with k8s metadata
           snippets:
             pipelineStages:
               - cri: {}
