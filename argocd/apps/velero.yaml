@@ -121,6 +121,10 @@ spec:
             cpu: 500m
             memory: 512Mi
 
+        # ── CRD upgrade job ───────────────────────────────────────────────────
+        # Disabled: chart 12.0.1 passes --apply which doesn't exist in v1.16.0
+        upgradeCRDs: false
+
         # ── Metrics ───────────────────────────────────────────────────────────
         metrics:
           enabled: true
