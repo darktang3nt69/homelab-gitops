@@ -1,0 +1,25 @@
+---
+# =============================================================================
+# Longhorn ServiceMonitor Patch
+# =============================================================================
+# Enables Prometheus scraping of Longhorn metrics
+# Label release: prometheus matches kube-prometheus-stack selector
+# =============================================================================
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: longhorn
+  namespace: longhorn-system
+  labels:
+    release: prometheus    # must match kube-prometheus-stack selector
+spec:
+  selector:
+    matchLabels:
+      app: longhorn-manager
+  namespaceSelector:
+    matchNames:
+      - longhorn-system
+  endpoints:
+    - port: manager
+      path: /metrics
+      interval: 30s

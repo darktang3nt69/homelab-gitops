@@ -1,0 +1,25 @@
+---
+# =============================================================================
+# Loki ServiceMonitor
+# =============================================================================
+# Loki chart creates its own ServiceMonitor but label may not match
+# This ensures correct label for kube-prometheus-stack discovery
+# =============================================================================
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: loki
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loki
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  endpoints:
+    - port: http-metrics
+      path: /metrics
+      interval: 30s
