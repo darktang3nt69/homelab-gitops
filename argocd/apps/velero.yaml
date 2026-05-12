@@ -52,8 +52,11 @@ spec:
         credentials:
           useSecret: true
           existingSecret: velero-minio-credentials
-          extraEnvVars:
-            AWS_CLUSTER_NAME: homelab
+        
+        # plain env var — not from secret
+        extraEnvVars:
+          - name: AWS_CLUSTER_NAME
+            value: homelab
 
         # ── Backup Storage Location — MinIO ───────────────────────────────────
         configuration:
