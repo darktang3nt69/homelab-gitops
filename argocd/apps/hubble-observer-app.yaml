@@ -1,0 +1,56 @@
+---
+# =============================================================================
+# Hubble Observer — ArgoCD Application
+# =============================================================================
+# Connects to hubble-relay and streams all Cilium network flows to stdout.
+# Promtail picks them up and ships to Loki.
+# Grafana dashboard ID: 23862 (import manually from grafana.com)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hubble-observer
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: oci://ghcr.io/onzack/helm-charts/hubble-observer
+    targetRevision: 2.3.0
+    helm:
+      values: |
+        grafanaDashboard:
+          enabled: false
+
+        hubbleRelay:
+          serviceName: hubble-relay
+          port: "80"
+          namespace: kube-system
+
+        verdictFilter: DROPPED
+
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
