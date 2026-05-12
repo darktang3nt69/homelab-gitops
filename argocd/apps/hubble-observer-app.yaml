@@ -38,6 +38,17 @@ spec:
             effect: NoSchedule
             operator: Exists
 
+        # Probes use $(VAR_NAME) syntax which Kubernetes does NOT expand in exec
+        # probe commands (only in container.command/args). The literal string
+        # "$(HUBBLE_RELAY_HOST):$(HUBBLE_RELAY_PORT)" is passed as-is, fails
+        # every check, and kills the container after ~70s (startupProbe timeout).
+        livenessProbe:
+          enabled: false
+        readinessProbe:
+          enabled: false
+        startupProbe:
+          enabled: false
+
         resources:
           requests:
             cpu: 50m
