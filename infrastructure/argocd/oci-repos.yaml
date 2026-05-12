@@ -1,0 +1,21 @@
+---
+# =============================================================================
+# ONZACK OCI Helm Registry — ArgoCD Repository Secret
+# =============================================================================
+# Registers ghcr.io/onzack/helm-charts as an OCI Helm source so ArgoCD
+# can pull charts like hubble-observer without explicit credentials
+# (public registry).
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: onzack-helm-oci
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+type: Opaque
+stringData:
+  type: helm
+  name: onzack-helm-oci
+  url: oci://ghcr.io/onzack/helm-charts
+  enableOCI: "true"
