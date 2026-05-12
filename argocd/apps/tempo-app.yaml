@@ -49,19 +49,17 @@ spec:
                 http:
                   endpoint: 0.0.0.0:4318
 
-        # inject credentials via env vars
-        # Tempo reads AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY natively
-        extraEnv:
-          - name: AWS_ACCESS_KEY_ID
-            valueFrom:
-              secretKeyRef:
-                name: tempo-minio-credentials
-                key: access-key
-          - name: AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                name: tempo-minio-credentials
-                key: secret-key
+          extraEnv:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: tempo-minio-credentials
+                  key: access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tempo-minio-credentials
+                  key: secret-key
 
         persistence:
           enabled: true
