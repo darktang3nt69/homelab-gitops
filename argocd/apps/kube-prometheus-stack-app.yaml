@@ -1,0 +1,245 @@
+---
+# =============================================================================
+# kube-prometheus-stack — ArgoCD Application
+# =============================================================================
+# Deploys: Prometheus + Grafana + Alertmanager + node-exporter + kube-state-metrics
+# Namespace: monitoring
+# Storage: Longhorn PVCs
+# Grafana URL: grafana.k8s.darktang3nt.cloud
+# Prometheus URL: prometheus.k8s.darktang3nt.cloud
+# Alertmanager URL: alertmanager.k8s.darktang3nt.cloud
+#
+# Credentials: Grafana admin password from Vault via ESO
+# Wave 1: Helm chart
+# Wave 2: Config (ExternalSecret + HTTPRoutes)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 85.0.1
+    helm:
+      values: |
+        # ── Global ────────────────────────────────────────────────────────────
+        fullnameOverride: prometheus
+
+        # ── Grafana ───────────────────────────────────────────────────────────
+        grafana:
+          enabled: true
+
+          # admin credentials from k8s Secret (ESO from Vault)
+          admin:
+            existingSecret: grafana-admin-credentials
+            userKey: username
+            passwordKey: password
+
+          # Longhorn PVC for dashboards + plugins persistence
+          persistence:
+            enabled: true
+            storageClassName: longhorn
+            size: 5Gi
+            accessModes:
+              - ReadWriteOnce
+
+          # default dashboards
+          defaultDashboardsEnabled: true
+          defaultDashboardsTimezone: Asia/Kolkata
+
+          # datasources — Prometheus pre-configured
+          # Loki + Tempo added after those are deployed
+          additionalDataSources:
+            - name: Loki
+              type: loki
+              url: http://loki-gateway.monitoring.svc.cluster.local
+              access: proxy
+              isDefault: false
+            - name: Tempo
+              type: tempo
+              url: http://tempo.monitoring.svc.cluster.local:3100
+              access: proxy
+              isDefault: false
+
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 100m
+            limits:
+              memory: 512Mi
+              cpu: 500m
+
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+          service:
+            type: ClusterIP
+            port: 80
+
+        # ── Prometheus ────────────────────────────────────────────────────────
+        prometheus:
+          prometheusSpec:
+            # Longhorn PVC for metrics storage
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: longhorn
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 20Gi
+
+            # 15 day retention
+            retention: 15d
+            retentionSize: "18GB"
+
+            # scrape interval
+            scrapeInterval: 30s
+            evaluationInterval: 30s
+
+            # resources
+            resources:
+              requests:
+                memory: 512Mi
+                cpu: 200m
+              limits:
+                memory: 1Gi
+                cpu: 500m
+
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                effect: NoSchedule
+                operator: Exists
+
+            # scrape all ServiceMonitors + PodMonitors across namespaces
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+
+          service:
+            type: ClusterIP
+            port: 9090
+
+        # ── Alertmanager ──────────────────────────────────────────────────────
+        alertmanager:
+          alertmanagerSpec:
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: longhorn
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 2Gi
+
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                effect: NoSchedule
+                operator: Exists
+
+            resources:
+              requests:
+                memory: 64Mi
+                cpu: 10m
+              limits:
+                memory: 128Mi
+                cpu: 100m
+
+          service:
+            type: ClusterIP
+            port: 9093
+
+        # ── Node Exporter ─────────────────────────────────────────────────────
+        # runs as DaemonSet — collects host metrics (CPU, RAM, disk, network)
+        nodeExporter:
+          enabled: true
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        # ── kube-state-metrics ────────────────────────────────────────────────
+        # collects k8s object metrics (pod status, deployment replicas etc)
+        kubeStateMetrics:
+          enabled: true
+
+        # ── Prometheus Operator ───────────────────────────────────────────────
+        prometheusOperator:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        # ── k3s specific ──────────────────────────────────────────────────────
+        # k3s uses different paths for some components
+        kubeEtcd:
+          enabled: true
+          endpoints:
+            - 192.168.1.9
+          service:
+            enabled: true
+            port: 2381
+            targetPort: 2381
+
+        kubeControllerManager:
+          enabled: false   # k3s embeds this, not separately scrapeable
+
+        kubeScheduler:
+          enabled: false   # k3s embeds this
+
+        kubeProxy:
+          enabled: false   # replaced by Cilium
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# kube-prometheus-stack Config — ArgoCD Application
+# =============================================================================
+# Applies ExternalSecret + HTTPRoutes
+# Wave 2 — after stack is running
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/kube-prometheus-stack
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
