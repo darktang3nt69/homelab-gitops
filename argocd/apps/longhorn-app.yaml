@@ -59,6 +59,9 @@ spec:
           # URL: longhorn.darktang3nt.cloud
           replicas: 1
 
+        monitoring:
+          enabled: true
+
         resources:
           limits:
             cpu: 500m

@@ -102,7 +102,7 @@ spec:
         # ── Metrics ──────────────────────────────────────────────────────────
         metrics:
           serviceMonitor:
-            enabled: false   # enable when kube-prometheus-stack is deployed
+            enabled: true
 
   destination:
     server: https://kubernetes.default.svc

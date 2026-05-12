@@ -1,0 +1,30 @@
+---
+# =============================================================================
+# Cilium Config — ArgoCD Application
+# =============================================================================
+# Manages Cilium / Hubble monitoring resources (ServiceMonitors).
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cilium-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/cilium
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

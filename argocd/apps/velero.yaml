@@ -125,7 +125,7 @@ spec:
         metrics:
           enabled: true
           serviceMonitor:
-            enabled: false    # enable when kube-prometheus-stack is deployed
+            enabled: true
 
         # ── Scheduling ────────────────────────────────────────────────────────
         tolerations:

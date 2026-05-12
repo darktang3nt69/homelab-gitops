@@ -1,62 +1,27 @@
 ---
 # =============================================================================
-# Cilium ServiceMonitor
+# Cilium / Hubble ServiceMonitors
 # =============================================================================
-# Scrapes Cilium agent + operator + Hubble metrics
+# hubble-metrics service (selector: k8s-app=cilium) exposes port 9965
+# named "hubble-metrics" — scrapes Hubble metrics from all Cilium agents.
+# Cilium operator exposes port 9963 named "prometheus".
 # =============================================================================
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: cilium-agent
+  name: hubble-metrics
   namespace: kube-system
   labels:
     release: prometheus
 spec:
   selector:
     matchLabels:
-      k8s-app: cilium
+      app.kubernetes.io/name: hubble
   namespaceSelector:
     matchNames:
       - kube-system
   endpoints:
-    - port: prometheus
+    - port: hubble-metrics
       path: /metrics
       interval: 30s
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: cilium-operator
-  namespace: kube-system
-  labels:
-    release: prometheus
-spec:
-  selector:
-    matchLabels:
-      io.cilium/app: operator
-  namespaceSelector:
-    matchNames:
-      - kube-system
-  endpoints:
-    - port: prometheus
-      path: /metrics
-      interval: 30s
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: hubble
-  namespace: kube-system
-  labels:
-    release: prometheus
-spec:
-  selector:
-    matchLabels:
-      k8s-app: hubble-relay
-  namespaceSelector:
-    matchNames:
-      - kube-system
-  endpoints:
-    - port: prometheus
-      path: /metrics
-      interval: 30s
+

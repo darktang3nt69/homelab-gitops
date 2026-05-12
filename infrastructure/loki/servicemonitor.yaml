@@ -1,25 +1,106 @@
 ---
 # =============================================================================
-# Loki ServiceMonitor
+# Loki Grafana Dashboard
 # =============================================================================
-# Loki chart creates its own ServiceMonitor but label may not match
-# This ensures correct label for kube-prometheus-stack discovery
+# Provides a Loki logs dashboard in Grafana via the grafana-sc-dashboard sidecar.
+# The sidecar watches for ConfigMaps with label grafana_dashboard=1.
 # =============================================================================
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: loki
+  name: loki-grafana-dashboard
   namespace: monitoring
   labels:
-    release: prometheus
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: loki
-  namespaceSelector:
-    matchNames:
-      - monitoring
-  endpoints:
-    - port: http-metrics
-      path: /metrics
-      interval: 30s
+    grafana_dashboard: "1"
+data:
+  loki-dashboard.json: |
+    {
+      "__inputs": [],
+      "__requires": [],
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "datasource": { "type": "loki", "uid": "${lokids}" },
+          "fieldConfig": { "defaults": {}, "overrides": [] },
+          "gridPos": { "h": 20, "w": 24, "x": 0, "y": 0 },
+          "id": 1,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          },
+          "targets": [
+            {
+              "datasource": { "type": "loki", "uid": "${lokids}" },
+              "expr": "{namespace=\"$namespace\", pod=~\"$pod\"}",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Logs",
+          "type": "logs"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 38,
+      "tags": ["loki", "logs"],
+      "templating": {
+        "list": [
+          {
+            "current": {},
+            "datasource": { "type": "loki", "uid": "${lokids}" },
+            "definition": "label_values(namespace)",
+            "hide": 0,
+            "includeAll": false,
+            "multi": false,
+            "name": "namespace",
+            "options": [],
+            "query": "label_values(namespace)",
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {},
+            "datasource": { "type": "loki", "uid": "${lokids}" },
+            "definition": "label_values({namespace=\"$namespace\"}, pod)",
+            "hide": 0,
+            "includeAll": true,
+            "multi": true,
+            "name": "pod",
+            "options": [],
+            "query": "label_values({namespace=\"$namespace\"}, pod)",
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {},
+            "hide": 0,
+            "includeAll": false,
+            "multi": false,
+            "name": "lokids",
+            "options": [],
+            "query": "loki",
+            "refresh": 1,
+            "type": "datasource"
+          }
+        ]
+      },
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Loki Logs Explorer",
+      "uid": "loki-logs-explorer",
+      "version": 1
+    }
