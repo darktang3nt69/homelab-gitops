@@ -16,7 +16,7 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: prometheus-grafana
+        - name: kube-prometheus-stack-grafana
           namespace: monitoring
           port: 80
 ---
@@ -37,7 +37,7 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: prometheus-kube-prometheus-prometheus
+        - name: prometheus-prometheus
           namespace: monitoring
           port: 9090
 ---
@@ -58,6 +58,6 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: prometheus-kube-prometheus-alertmanager
+        - name: prometheus-alertmanager
           namespace: monitoring
           port: 9093
