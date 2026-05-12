@@ -17,5 +17,5 @@ type: Opaque
 stringData:
   type: helm
   name: onzack-helm-oci
-  url: oci://ghcr.io/onzack/helm-charts
+  url: ghcr.io/onzack/helm-charts
   enableOCI: "true"

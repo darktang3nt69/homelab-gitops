@@ -18,7 +18,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: oci://ghcr.io/onzack/helm-charts
+    repoURL: ghcr.io/onzack/helm-charts
     chart: hubble-observer
     targetRevision: 2.3.0
     helm:
