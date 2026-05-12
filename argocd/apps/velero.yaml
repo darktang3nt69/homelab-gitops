@@ -1,0 +1,173 @@
+---
+# =============================================================================
+# Velero — ArgoCD Application
+# =============================================================================
+# Cluster backup and restore tool
+# Backup targets:
+#   - k8s objects (deployments, secrets, configmaps, PVCs etc)
+#   - Longhorn PVC snapshots via CSI
+# Storage: MinIO (s3.k8s.darktang3nt.cloud / velero bucket)
+# Retention: 3 days
+# Schedule: daily at 2AM
+#
+# Requires:
+#   - MinIO running with velero bucket
+#   - velero-minio-credentials secret in velero namespace (from Vault via ESO)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://vmware-tanzu.github.io/helm-charts
+    chart: velero
+    targetRevision: 12.0.1
+    helm:
+      values: |
+        # ── Image ─────────────────────────────────────────────────────────────
+        image:
+          repository: velero/velero
+          tag: v1.16.0
+
+        # ── Init Containers — AWS S3 Plugin ───────────────────────────────────
+        # Velero uses plugins for storage backends
+        # We use the AWS plugin because MinIO is S3-compatible
+        initContainers:
+          - name: velero-plugin-for-aws
+            image: velero/velero-plugin-for-aws:v1.12.0
+            volumeMounts:
+              - mountPath: /target
+                name: plugins
+
+        # ── Credentials ───────────────────────────────────────────────────────
+        # MinIO credentials from Vault via ESO
+        # secret must exist before ArgoCD syncs this app
+        credentials:
+          useSecret: true
+          existingSecret: velero-minio-credentials
+          extraEnvVars:
+            AWS_CLUSTER_NAME: homelab
+
+        # ── Backup Storage Location — MinIO ───────────────────────────────────
+        configuration:
+          backupStorageLocation:
+            - name: default
+              provider: aws
+              bucket: velero
+              # MinIO S3-compatible endpoint (internal cluster DNS)
+              config:
+                region: us-east-1            # MinIO doesn't care — required field
+                s3Url: http://minio.storage:9000
+                s3ForcePathStyle: "true"     # required for MinIO path-style URLs
+                insecureSkipTLSVerify: "true" # HTTP internally, no TLS needed
+
+          # ── Volume Snapshot Location — Longhorn CSI ──────────────────────────
+          volumeSnapshotLocation:
+            - name: default
+              provider: csi                  # use CSI snapshots for Longhorn PVCs
+
+          # ── Feature Flags ────────────────────────────────────────────────────
+          features: EnableCSI               # enable CSI snapshot support
+
+          # ── Default Backup TTL ────────────────────────────────────────────────
+          defaultBackupTTL: 72h             # 3 days retention
+
+        # ── Scheduled Backups ─────────────────────────────────────────────────
+        schedules:
+          # Daily full cluster backup at 2AM
+          daily-backup:
+            disabled: false
+            schedule: "0 2 * * *"
+            useOwnerReferencesInBackup: false
+            template:
+              ttl: 72h                      # 3 days retention
+              storageLocation: default
+              # exclude observability data — ephemeral, recreatable
+              excludedNamespaces:
+                - kube-system
+              includedNamespaces:
+                - "*"
+              # exclude large ephemeral resources
+              excludedResources:
+                - events
+                - events.events.k8s.io
+
+        # ── Node Agent — Required for PVC Backups ─────────────────────────────
+        # node-agent runs as DaemonSet on every node
+        # required for file-system level PVC backup/restore
+        deployNodeAgent: true
+        nodeAgent:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        # ── Resources ─────────────────────────────────────────────────────────
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+        # ── Metrics ───────────────────────────────────────────────────────────
+        metrics:
+          enabled: true
+          serviceMonitor:
+            enabled: false    # enable when kube-prometheus-stack is deployed
+
+        # ── Scheduling ────────────────────────────────────────────────────────
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# Velero Config — ArgoCD Application
+# =============================================================================
+# Applies ExternalSecret for MinIO credentials
+# Wave 2 — after Velero Helm chart (wave 1)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/velero
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
