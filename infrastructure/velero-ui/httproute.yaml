@@ -1,0 +1,26 @@
+---
+# =============================================================================
+# Velero UI — HTTPRoute
+# =============================================================================
+# URL: velero-ui.k8s.darktang3nt.cloud (Twingate only)
+# =============================================================================
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: velero-ui
+  namespace: velero
+spec:
+  parentRefs:
+    - name: homelab-gateway
+      namespace: envoy-gateway-system
+  hostnames:
+    - "velero-ui.k8s.darktang3nt.cloud"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: velero-ui
+          namespace: velero
+          port: 3000

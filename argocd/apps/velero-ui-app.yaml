@@ -1,0 +1,105 @@
+---
+# =============================================================================
+# Velero UI — ArgoCD Application
+# =============================================================================
+# Realtime web dashboard for managing Velero backups
+# Replaces need for velero CLI for day-to-day operations
+# Features: backup/restore management, logs, schedules, BSL management
+# Repo: https://github.com/otwld/velero-ui
+# Docs: https://velero-ui.docs.otwld.com/
+#
+# Credentials: from Vault via ESO
+# URL: velero-ui.k8s.darktang3nt.cloud (Twingate only)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero-ui
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://helm.otwld.com
+    chart: velero-ui
+    targetRevision: "*"    # latest stable
+    helm:
+      values: |
+        # ── Velero Connection ──────────────────────────────────────────────────
+        # Velero UI connects to Velero via k8s API (RBAC)
+        # No direct Velero connection needed — reads CRDs from k8s API
+        velero:
+          namespace: velero   # namespace where Velero is installed
+
+        # ── Authentication ────────────────────────────────────────────────────
+        # Built-in auth with username/password
+        # Credentials from Vault via ESO
+        auth:
+          enabled: true
+          # secret must exist before sync
+          # contains: VELERO_UI_USERNAME, VELERO_UI_PASSWORD
+          existingSecret: velero-ui-credentials
+
+        # ── Resources ─────────────────────────────────────────────────────────
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 128Mi
+            cpu: 200m
+
+        # ── Scheduling ────────────────────────────────────────────────────────
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+        # ── Service ───────────────────────────────────────────────────────────
+        service:
+          type: ClusterIP
+          port: 3000
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false   # velero namespace already exists
+---
+# =============================================================================
+# Velero UI Config — ArgoCD Application
+# =============================================================================
+# Applies ExternalSecret + HTTPRoute
+# Wave 2 — after Velero UI pod is running
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero-ui-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/velero-ui
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
