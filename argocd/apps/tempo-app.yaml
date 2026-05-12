@@ -34,8 +34,8 @@ spec:
                 region: us-east-1
                 insecure: true
                 forcepathstyle: true
-                access_key: ${TEMPO_S3_ACCESS_KEY}
-                secret_key: ${TEMPO_S3_SECRET_KEY}
+                access_key: ""
+                secret_key: ""
 
           # 7 day retention for traces
           retention: 168h
@@ -49,14 +49,15 @@ spec:
                 http:
                   endpoint: 0.0.0.0:4318
 
-        # S3 credentials from secret
+        # inject credentials via env vars
+        # Tempo reads AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY natively
         extraEnv:
-          - name: TEMPO_S3_ACCESS_KEY
+          - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
                 name: tempo-minio-credentials
                 key: access-key
-          - name: TEMPO_S3_SECRET_KEY
+          - name: AWS_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
                 name: tempo-minio-credentials
