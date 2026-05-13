@@ -4,6 +4,13 @@ kind: HTTPRoute
 metadata:
   name: grafana
   namespace: monitoring
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Grafana"
+    gethomepage.dev/description: "Metrics & log dashboards"
+    gethomepage.dev/group: "Observability"
+    gethomepage.dev/icon: "grafana.png"
+    gethomepage.dev/href: "https://grafana.k8s.darktang3nt.cloud"
 spec:
   parentRefs:
     - name: homelab-gateway
@@ -25,6 +32,13 @@ kind: HTTPRoute
 metadata:
   name: prometheus
   namespace: monitoring
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Prometheus"
+    gethomepage.dev/description: "Metrics collection & alerting"
+    gethomepage.dev/group: "Observability"
+    gethomepage.dev/icon: "prometheus.png"
+    gethomepage.dev/href: "https://prometheus.k8s.darktang3nt.cloud"
 spec:
   parentRefs:
     - name: homelab-gateway
@@ -46,6 +60,13 @@ kind: HTTPRoute
 metadata:
   name: alertmanager
   namespace: monitoring
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Alertmanager"
+    gethomepage.dev/description: "Alert routing & silencing"
+    gethomepage.dev/group: "Observability"
+    gethomepage.dev/icon: "alertmanager.png"
+    gethomepage.dev/href: "https://alertmanager.k8s.darktang3nt.cloud"
 spec:
   parentRefs:
     - name: homelab-gateway

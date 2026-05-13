@@ -1,0 +1,35 @@
+---
+# =============================================================================
+# Homepage — ArgoCD Application
+# =============================================================================
+# Start page aggregating all homelab UIs
+# Uses Gateway API HTTPRoute autodiscovery (annotations on HTTPRoutes)
+# Namespace: monitoring
+# URL: homepage.k8s.darktang3nt.cloud
+#
+# Docs: https://gethomepage.dev/installation/k8s/
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homepage
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/homepage
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

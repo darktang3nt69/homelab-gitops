@@ -4,6 +4,13 @@ kind: HTTPRoute
 metadata:
   name: dozzle
   namespace: monitoring
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Dozzle"
+    gethomepage.dev/description: "Real-time pod log viewer"
+    gethomepage.dev/group: "Observability"
+    gethomepage.dev/icon: "dozzle.png"
+    gethomepage.dev/href: "https://logs.k8s.darktang3nt.cloud"
 spec:
   parentRefs:
     - name: homelab-gateway

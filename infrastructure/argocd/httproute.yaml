@@ -15,6 +15,13 @@ kind: HTTPRoute
 metadata:
   name: argocd
   namespace: argocd
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "ArgoCD"
+    gethomepage.dev/description: "GitOps continuous delivery"
+    gethomepage.dev/group: "GitOps & Infrastructure"
+    gethomepage.dev/icon: "argocd.png"
+    gethomepage.dev/href: "https://argocd.k8s.darktang3nt.cloud"
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io

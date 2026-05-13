@@ -9,6 +9,13 @@ kind: HTTPRoute
 metadata:
   name: velero-ui
   namespace: velero
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Velero UI"
+    gethomepage.dev/description: "Kubernetes backup management"
+    gethomepage.dev/group: "Backup"
+    gethomepage.dev/icon: "velero.png"
+    gethomepage.dev/href: "https://velero-ui.k8s.darktang3nt.cloud"
 spec:
   parentRefs:
     - name: homelab-gateway
