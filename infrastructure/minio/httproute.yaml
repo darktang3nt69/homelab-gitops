@@ -50,6 +50,8 @@ metadata:
     gethomepage.dev/group: "Security & Storage"
     gethomepage.dev/icon: "minio.png"
     gethomepage.dev/href: "https://minio.k8s.darktang3nt.cloud"
+    gethomepage.dev/pod-selector: "app=minio"
+    gethomepage.dev/pod-selector: app=minio
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io

@@ -11,6 +11,8 @@ metadata:
     gethomepage.dev/group: "Observability"
     gethomepage.dev/icon: "dozzle.png"
     gethomepage.dev/href: "https://logs.k8s.darktang3nt.cloud"
+    gethomepage.dev/pod-selector: "app=dozzle"
+    gethomepage.dev/pod-selector: app=dozzle
 spec:
   parentRefs:
     - name: homelab-gateway

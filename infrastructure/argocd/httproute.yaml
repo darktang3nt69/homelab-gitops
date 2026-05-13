@@ -22,6 +22,8 @@ metadata:
     gethomepage.dev/group: "GitOps & Infrastructure"
     gethomepage.dev/icon: "argocd.png"
     gethomepage.dev/href: "https://argocd.k8s.darktang3nt.cloud"
+    gethomepage.dev/app: "argocd-server"
+    gethomepage.dev/app: argocd-server
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
