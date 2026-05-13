@@ -21,6 +21,9 @@ data:
       GitOps & Infrastructure:
         style: row
         columns: 3
+      Storage:
+        style: row
+        columns: 3
       Security & Storage:
         style: row
         columns: 3
