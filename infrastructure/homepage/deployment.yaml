@@ -21,9 +21,6 @@ data:
       GitOps & Infrastructure:
         style: row
         columns: 3
-      Storage:
-        style: row
-        columns: 3
       Security & Storage:
         style: row
         columns: 3
@@ -101,6 +98,12 @@ spec:
                   fieldPath: status.podIP
             - name: HOMEPAGE_ALLOWED_HOSTS
               value: "$(MY_POD_IP):3000,homepage.k8s.darktang3nt.cloud"
+            - name: HOMEPAGE_VAR_ARGOCD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: homepage-argocd-token
+                  key: token
+                  optional: true
           livenessProbe:
             httpGet:
               path: /api/healthcheck

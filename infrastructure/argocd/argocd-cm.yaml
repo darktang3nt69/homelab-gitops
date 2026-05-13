@@ -13,6 +13,9 @@ metadata:
     app.kubernetes.io/name: argocd-cm
     app.kubernetes.io/part-of: argocd
 data:
+  # Homepage readonly account for service widget
+  accounts.homepage: apiKey
+
   # Exclude Cilium runtime objects that are auto-created by the CNI and
   # are not managed via Git — prevents false OutOfSync noise.
   resource.exclusions: |

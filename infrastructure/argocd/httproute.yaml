@@ -20,10 +20,12 @@ metadata:
     gethomepage.dev/name: "ArgoCD"
     gethomepage.dev/description: "GitOps continuous delivery"
     gethomepage.dev/group: "GitOps & Infrastructure"
-    gethomepage.dev/icon: "argocd.png"
+    gethomepage.dev/icon: "argo-cd.png"
     gethomepage.dev/href: "https://argocd.k8s.darktang3nt.cloud"
     gethomepage.dev/app: "argocd-server"
-    gethomepage.dev/app: argocd-server
+    gethomepage.dev/widget.type: "argocd"
+    gethomepage.dev/widget.url: "http://argocd-server.argocd.svc.cluster.local:80"
+    gethomepage.dev/widget.key: "{{HOMEPAGE_VAR_ARGOCD_TOKEN}}"
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io

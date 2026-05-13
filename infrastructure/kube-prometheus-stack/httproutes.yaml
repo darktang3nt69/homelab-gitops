@@ -11,6 +11,11 @@ metadata:
     gethomepage.dev/group: "Observability"
     gethomepage.dev/icon: "grafana.png"
     gethomepage.dev/href: "https://grafana.k8s.darktang3nt.cloud"
+    gethomepage.dev/widget.type: "grafana"
+    gethomepage.dev/widget.version: "2"
+    gethomepage.dev/widget.url: "http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80"
+    gethomepage.dev/widget.username: "darktang3nt"
+    gethomepage.dev/widget.password: "7799504208aA@"
 spec:
   parentRefs:
     - name: homelab-gateway
@@ -39,6 +44,8 @@ metadata:
     gethomepage.dev/group: "Observability"
     gethomepage.dev/icon: "prometheus.png"
     gethomepage.dev/href: "https://prometheus.k8s.darktang3nt.cloud"
+    gethomepage.dev/widget.type: "prometheus"
+    gethomepage.dev/widget.url: "http://prometheus-prometheus.monitoring.svc.cluster.local:9090"
 spec:
   parentRefs:
     - name: homelab-gateway
