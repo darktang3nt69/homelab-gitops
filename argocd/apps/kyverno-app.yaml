@@ -109,6 +109,8 @@ spec:
     repoURL: https://github.com/darktang3nt69/homelab-gitops
     targetRevision: main
     path: infrastructure/kyverno
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
