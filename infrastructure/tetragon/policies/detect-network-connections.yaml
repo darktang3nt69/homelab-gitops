@@ -1,0 +1,23 @@
+---
+# =============================================================================
+# TracingPolicy: Detect Outbound Network Connections
+# =============================================================================
+# Fires a Tetragon event on every outbound TCP connection attempt.
+# Useful for detecting unexpected egress (e.g., reverse shells, C2 callbacks,
+# cryptocurrency miners phoning home).
+#
+# Observed function: tcp_connect (kernel network stack, pre-routing)
+# Captured argument: sock — contains src/dst IP, port, and protocol
+# Action: observe only (Post)
+# =============================================================================
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: detect-network-connections
+spec:
+  kprobes:
+    - call: "tcp_connect"
+      syscall: false
+      args:
+        - index: 0
+          type: "sock"

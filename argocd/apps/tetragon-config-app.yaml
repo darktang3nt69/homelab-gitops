@@ -1,0 +1,31 @@
+---
+# =============================================================================
+# Tetragon Config — ArgoCD Application
+# =============================================================================
+# Deploys Tetragon TracingPolicies from infrastructure/tetragon/.
+# Sync wave 3 ensures Tetragon CRDs are installed first (wave 2).
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tetragon-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/tetragon
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tetragon
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

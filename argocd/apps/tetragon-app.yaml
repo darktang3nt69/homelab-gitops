@@ -1,0 +1,69 @@
+---
+# =============================================================================
+# Tetragon — ArgoCD Application
+# =============================================================================
+# Cilium eBPF-based security observability and runtime enforcement.
+# Streams kernel-level events (exec, file access, network, syscalls) via eBPF.
+# TracingPolicies live in infrastructure/tetragon/policies/.
+# Namespace: tetragon
+# Chart: https://helm.cilium.io/
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tetragon
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://helm.cilium.io/
+    chart: tetragon
+    targetRevision: 1.7.0
+    helm:
+      values: |
+        # ── DaemonSet tolerations ─────────────────────────────────────────────
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+        # ── Tetragon agent ────────────────────────────────────────────────────
+        tetragon:
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          serviceMonitor:
+            enabled: true
+            extraLabels:
+              release: prometheus
+
+        # ── Tetragon Operator ─────────────────────────────────────────────────
+        tetragonOperator:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+          serviceMonitor:
+            enabled: true
+            extraLabels:
+              release: prometheus
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tetragon
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

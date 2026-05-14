@@ -1,0 +1,66 @@
+---
+# =============================================================================
+# TracingPolicy: Detect Privilege Escalation
+# =============================================================================
+# Fires a Tetragon event when a process attempts to switch to UID/GID 0 (root).
+# Catches classic privilege escalation patterns:
+#   - SUID binary exploitation (setuid(0) call after exec)
+#   - Container breakout attempts that call setuid/setgid
+#   - Python/Perl one-liners: os.setuid(0)
+#
+# Observed syscalls: setuid(0), setgid(0), setresuid(0,0,0), setresgid(0,0,0)
+# Action: observe only (Post) — escalate to Sigkill after baselining
+# =============================================================================
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: detect-privilege-escalation
+spec:
+  kprobes:
+    - call: "sys_setuid"
+      syscall: true
+      args:
+        - index: 0
+          type: "uint32"
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+
+    - call: "sys_setgid"
+      syscall: true
+      args:
+        - index: 0
+          type: "uint32"
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+
+    - call: "sys_setresuid"
+      syscall: true
+      args:
+        - index: 0
+          type: "int32"
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+
+    - call: "sys_setresgid"
+      syscall: true
+      args:
+        - index: 0
+          type: "int32"
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"

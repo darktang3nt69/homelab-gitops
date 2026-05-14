@@ -1,0 +1,31 @@
+---
+# =============================================================================
+# TracingPolicy: Detect Sensitive File Access
+# =============================================================================
+# Fires a Tetragon event on read access to high-value credential files:
+#   /etc/shadow         — password hashes
+#   /etc/passwd         — user accounts
+#   /var/run/secrets/   — Kubernetes service account tokens and certs
+#
+# Observed function: security_file_open (LSM hook, more reliable than openat)
+# Action: observe only (Post)
+# =============================================================================
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: detect-sensitive-file-access
+spec:
+  kprobes:
+    - call: "security_file_open"
+      syscall: false
+      args:
+        - index: 0
+          type: "file"
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Prefix"
+              values:
+                - "/etc/shadow"
+                - "/etc/passwd"
+                - "/var/run/secrets/kubernetes.io/serviceaccount"
