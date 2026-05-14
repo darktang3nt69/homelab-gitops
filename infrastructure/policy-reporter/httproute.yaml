@@ -1,0 +1,27 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: policy-reporter
+  namespace: policy-reporter
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Policy Reporter"
+    gethomepage.dev/description: "Kyverno policy violation dashboard"
+    gethomepage.dev/group: "Security & Storage"
+    gethomepage.dev/icon: "https://raw.githubusercontent.com/kyverno/policy-reporter/main/docs/images/logo.png"
+    gethomepage.dev/href: "https://policy-reporter.k8s.darktang3nt.cloud"
+spec:
+  parentRefs:
+    - name: homelab-gateway
+      namespace: envoy-gateway-system
+  hostnames:
+    - "policy-reporter.k8s.darktang3nt.cloud"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: policy-reporter-ui
+          namespace: policy-reporter
+          port: 8080

@@ -1,0 +1,66 @@
+---
+# =============================================================================
+# Policy Reporter — ArgoCD Application
+# =============================================================================
+# Visualises Kyverno PolicyReport / ClusterPolicyReport results
+# Includes the standalone Policy Reporter UI (v2) and Kyverno plugin
+# URL: policy-reporter.k8s.darktang3nt.cloud
+#
+# Wave 3: after Kyverno (wave 1) is running
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: policy-reporter
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://kyverno.github.io/policy-reporter
+    chart: policy-reporter
+    targetRevision: 3.7.4
+    helm:
+      values: |
+        # ── Core ─────────────────────────────────────────────────────────────
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+        # ── Metrics ───────────────────────────────────────────────────────────
+        serviceMonitor:
+          enabled: true
+          labels:
+            release: prometheus
+
+        # ── UI ────────────────────────────────────────────────────────────────
+        ui:
+          enabled: true
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        # ── Kyverno Plugin ────────────────────────────────────────────────────
+        plugin:
+          kyverno:
+            enabled: true
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                effect: NoSchedule
+                operator: Exists
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: policy-reporter
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
