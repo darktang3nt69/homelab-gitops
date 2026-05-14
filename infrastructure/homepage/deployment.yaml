@@ -42,10 +42,25 @@ data:
           memory: true
           showLabel: true
     - resources:
-        backend: resources
+        label: System
         expanded: true
         cpu: true
         memory: true
+        cputemp: true
+        uptime: true
+        refresh: 3000
+    - resources:
+        label: SSD
+        expanded: true
+        disk: /mnt/ssd
+        diskUnits: bbytes
+        refresh: 3000
+    - resources:
+        label: HDD
+        expanded: true
+        disk: /mnt/hdd
+        diskUnits: bbytes
+        refresh: 3000
     - search:
         provider: duckduckgo
         target: _blank
@@ -144,12 +159,24 @@ spec:
               subPath: custom.js
             - mountPath: /app/config/logs
               name: logs
+            - mountPath: /mnt/ssd
+              name: disk-ssd
+              readOnly: true
+            - mountPath: /mnt/hdd
+              name: disk-hdd
+              readOnly: true
       volumes:
         - name: homepage-config
           configMap:
             name: homepage
         - name: logs
           emptyDir: {}
+        - name: disk-ssd
+          hostPath:
+            path: /mnt/ssd
+        - name: disk-hdd
+          hostPath:
+            path: /mnt/hdd
 ---
 apiVersion: v1
 kind: Service
