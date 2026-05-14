@@ -18,11 +18,25 @@ data:
 
   # Exclude Cilium runtime objects that are auto-created by the CNI and
   # are not managed via Git — prevents false OutOfSync noise.
+  # Exclude Velero runtime objects (Backup, Restore, etc.) that are created
+  # dynamically by Velero schedules — not managed via Git.
   resource.exclusions: |
     - apiGroups:
       - cilium.io
       kinds:
       - CiliumIdentity
       - CiliumEndpoint
+      clusters:
+      - "*"
+    - apiGroups:
+      - velero.io
+      kinds:
+      - Backup
+      - Restore
+      - PodVolumeBackup
+      - PodVolumeRestore
+      - DeleteBackupRequest
+      - DownloadRequest
+      - ServerStatusRequest
       clusters:
       - "*"
