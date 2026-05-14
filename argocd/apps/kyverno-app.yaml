@@ -114,6 +114,17 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
+  ignoreDifferences:
+    - group: kyverno.io
+      kind: ClusterPolicy
+      jqPathExpressions:
+        - .spec.admission
+        - .spec.emitWarning
+    - group: kyverno.io
+      kind: Policy
+      jqPathExpressions:
+        - .spec.admission
+        - .spec.emitWarning
   syncPolicy:
     automated:
       prune: true
@@ -121,3 +132,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
