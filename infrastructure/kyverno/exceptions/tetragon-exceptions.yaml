@@ -18,19 +18,15 @@ spec:
     - policyName: disallow-privileged-containers
       ruleNames:
         - privileged-containers
-        - autogen-privileged-containers
     - policyName: disallow-host-namespaces
       ruleNames:
         - host-namespaces
-        - autogen-host-namespaces
     - policyName: require-non-root-user
       ruleNames:
         - check-runasnonroot
-        - autogen-check-runasnonroot
     - policyName: require-resource-limits
       ruleNames:
         - validate-resources
-        - autogen-validate-resources
   match:
     any:
       - resources:
