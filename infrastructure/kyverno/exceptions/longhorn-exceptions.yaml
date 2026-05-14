@@ -1,0 +1,32 @@
+---
+# =============================================================================
+# PolicyException: Longhorn
+# =============================================================================
+# Longhorn requires privileged containers for:
+#   - iSCSI operations (block storage)
+#   - Direct disk access
+#   - NFS mounting for RWX volumes
+# =============================================================================
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: longhorn-exceptions
+  namespace: longhorn-system
+spec:
+  exceptions:
+    - policyName: disallow-privileged-containers
+      ruleNames:
+        - privileged-containers
+    - policyName: disallow-host-namespaces
+      ruleNames:
+        - host-namespaces
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - longhorn-system

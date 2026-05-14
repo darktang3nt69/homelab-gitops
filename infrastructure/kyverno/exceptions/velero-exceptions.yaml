@@ -1,0 +1,31 @@
+---
+# =============================================================================
+# PolicyException: Velero
+# =============================================================================
+# Velero node-agent needs privileged access to:
+#   - Mount volumes for backup/restore operations
+#   - Access host filesystem for PVC backups
+# =============================================================================
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: velero-exceptions
+  namespace: velero
+spec:
+  exceptions:
+    - policyName: disallow-privileged-containers
+      ruleNames:
+        - privileged-containers
+    - policyName: disallow-host-namespaces
+      ruleNames:
+        - host-namespaces
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - velero

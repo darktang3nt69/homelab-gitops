@@ -1,0 +1,81 @@
+---
+# =============================================================================
+# PolicyException: kube-system (general)
+# =============================================================================
+# CoreDNS, metrics-server, and other k3s system components
+# need various elevated permissions to function
+# =============================================================================
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: kube-system-exceptions
+  namespace: kube-system
+spec:
+  exceptions:
+    - policyName: disallow-privileged-containers
+      ruleNames:
+        - privileged-containers
+    - policyName: disallow-host-namespaces
+      ruleNames:
+        - host-namespaces
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+    - policyName: require-resource-limits
+      ruleNames:
+        - validate-resources
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - kube-system
+---
+# =============================================================================
+# PolicyException: ArgoCD
+# =============================================================================
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: argocd-exceptions
+  namespace: argocd
+spec:
+  exceptions:
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+    - policyName: require-resource-limits
+      ruleNames:
+        - validate-resources
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - argocd
+---
+# =============================================================================
+# PolicyException: Security namespace (Vault, ESO)
+# =============================================================================
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: security-exceptions
+  namespace: security
+spec:
+  exceptions:
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+    - policyName: require-resource-limits
+      ruleNames:
+        - validate-resources
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - security

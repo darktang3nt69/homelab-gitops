@@ -1,0 +1,39 @@
+---
+# =============================================================================
+# Policy: Disallow Latest Tag
+# =============================================================================
+# Prevents using :latest image tag
+# Latest tag is mutable — same tag can point to different images over time
+# Makes deployments non-reproducible and breaks GitOps principles
+#
+# Mode: Audit
+# =============================================================================
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Using :latest tag makes deployments non-reproducible. Always pin to
+      a specific version tag. Exception: Dozzle uses latest by design.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Image tag :latest is not allowed. Pin to a specific version."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
+            =(initContainers):
+              - image: "!*:latest"

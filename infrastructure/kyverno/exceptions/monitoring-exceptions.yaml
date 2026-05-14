@@ -1,0 +1,53 @@
+---
+# =============================================================================
+# PolicyException: Monitoring Stack
+# =============================================================================
+# node-exporter: needs hostPID + hostNetwork to collect host metrics
+# Promtail: needs hostPath access to read pod logs from /var/log/pods
+# Tetragon: needs privileged for eBPF operations (future)
+# =============================================================================
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: monitoring-exceptions
+  namespace: monitoring
+spec:
+  exceptions:
+    - policyName: disallow-host-namespaces
+      ruleNames:
+        - host-namespaces
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+    - policyName: disallow-privileged-containers
+      ruleNames:
+        - privileged-containers
+    - policyName: disallow-latest-tag
+      ruleNames:
+        - require-image-tag
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - monitoring
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus-node-exporter
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - monitoring
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: promtail
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - monitoring
+          selector:
+            matchLabels:
+              app: dozzle

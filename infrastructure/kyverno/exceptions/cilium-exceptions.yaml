@@ -1,0 +1,44 @@
+---
+# =============================================================================
+# PolicyException: Cilium
+# =============================================================================
+# Cilium requires privileged + host network for eBPF operations
+# Without these, Cilium cannot manage network policies or eBPF programs
+# =============================================================================
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: cilium-exceptions
+  namespace: kube-system
+spec:
+  exceptions:
+    - policyName: disallow-privileged-containers
+      ruleNames:
+        - privileged-containers
+    - policyName: disallow-host-namespaces
+      ruleNames:
+        - host-namespaces
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+    - policyName: disallow-latest-tag
+      ruleNames:
+        - require-image-tag
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - kube-system
+          selector:
+            matchLabels:
+              k8s-app: cilium
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - kube-system
+          selector:
+            matchLabels:
+              io.cilium/app: operator

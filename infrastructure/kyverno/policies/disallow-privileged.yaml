@@ -1,0 +1,47 @@
+---
+# =============================================================================
+# Policy: Disallow Privileged Containers
+# =============================================================================
+# Prevents containers from running with privileged: true
+# Privileged containers have root access to the host — major security risk
+#
+# Mode: Audit (log only — not blocking yet)
+# Switch to Enforce after verifying all exceptions are correct
+#
+# Exceptions defined in: exceptions/privileged-exceptions.yaml
+# =============================================================================
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-privileged-containers
+  annotations:
+    policies.kyverno.io/title: Disallow Privileged Containers
+    policies.kyverno.io/category: Pod Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Privileged containers have access to all Linux capabilities and host
+      resources. This policy disallows privileged containers except for
+      system components that explicitly require it via PolicyException.
+spec:
+  validationFailureAction: Audit    # change to Enforce when ready
+  background: true
+  rules:
+    - name: privileged-containers
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Privileged containers are not allowed. Use PolicyException if required."
+        pattern:
+          spec:
+            containers:
+              - =(securityContext):
+                  =(privileged): "false"
+            =(initContainers):
+              - =(securityContext):
+                  =(privileged): "false"
+            =(ephemeralContainers):
+              - =(securityContext):
+                  =(privileged): "false"

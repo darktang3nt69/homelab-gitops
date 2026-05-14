@@ -1,0 +1,38 @@
+---
+# =============================================================================
+# Policy: Disallow Host Namespaces
+# =============================================================================
+# Prevents pods from using host PID, IPC, or network namespaces
+# Host namespace sharing gives containers visibility into host processes
+#
+# Mode: Audit
+# =============================================================================
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-host-namespaces
+  annotations:
+    policies.kyverno.io/title: Disallow Host Namespaces
+    policies.kyverno.io/category: Pod Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Host namespaces allow containers to see host-level processes and network.
+      This policy disallows hostPID, hostIPC, and hostNetwork except for
+      system components that require them via PolicyException.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: host-namespaces
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Use of host namespaces (hostPID, hostIPC, hostNetwork) is not allowed."
+        pattern:
+          spec:
+            =(hostPID): "false"
+            =(hostIPC): "false"
+            =(hostNetwork): "false"

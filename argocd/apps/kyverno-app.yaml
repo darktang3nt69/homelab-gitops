@@ -1,0 +1,113 @@
+---
+# =============================================================================
+# Kyverno — ArgoCD Application
+# =============================================================================
+# Policy engine for k8s — enforces security + best practices
+# Runs as admission controller — validates resources on create/update
+# Mode: Audit first → switch to Enforce after verification
+#
+# Wave 1: Kyverno Helm chart (admission controller)
+# Wave 2: Policies + Exceptions
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://kyverno.github.io/kyverno
+    chart: kyverno
+    targetRevision: 3.4.0
+    helm:
+      values: |
+        # ── Replicas ──────────────────────────────────────────────────────────
+        # single node — no need for multiple replicas
+        admissionController:
+          replicas: 1
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        backgroundController:
+          replicas: 1
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        cleanupController:
+          replicas: 1
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        reportsController:
+          replicas: 1
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        # ── Metrics ───────────────────────────────────────────────────────────
+        admissionController:
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: prometheus
+
+        # ── Features ─────────────────────────────────────────────────────────
+        features:
+          policyExceptions:
+            enabled: true      # enable PolicyException CRD
+            namespace: ""      # allow exceptions in any namespace
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+---
+# =============================================================================
+# Kyverno Policies — ArgoCD Application
+# =============================================================================
+# Wave 2 — after Kyverno admission controller is running
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno-policies
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/kyverno
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
