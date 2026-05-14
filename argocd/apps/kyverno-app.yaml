@@ -69,6 +69,16 @@ spec:
             enabled: true      # enable PolicyException CRD
             namespace: ""      # allow exceptions in any namespace
 
+        # ── Image fixes ───────────────────────────────────────────────────────
+        # bitnami/kubectl images were removed from Docker Hub — use their registry
+        webhooksCleanup:
+          image:
+            registry: registry.bitnami.com
+
+        policyReportsCleanup:
+          image:
+            registry: registry.bitnami.com
+
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
