@@ -24,6 +24,9 @@ spec:
     - policyName: require-non-root-user
       ruleNames:
         - check-runasnonroot
+    - policyName: require-resource-limits
+      ruleNames:
+        - require-resource-limits
   match:
     any:
       - resources:
