@@ -1,0 +1,82 @@
+---
+# =============================================================================
+# Trivy Operator — ArgoCD Application
+# =============================================================================
+# Kubernetes-native security scanner by Aqua Security
+# Continuously audits:
+#   - Container image vulnerabilities (VulnerabilityReport)
+#   - Kubernetes config issues (ConfigAuditReport)
+#   - RBAC assessment (RbacAssessmentReport)
+#   - Infrastructure assessment (InfraAssessmentReport)
+#   - Exposed secrets (ExposedSecretReport)
+#   - SBOM (SbomReport)
+# URL: trivy.k8s.darktang3nt.cloud
+# Namespace: trivy-system
+# Chart: https://aquasecurity.github.io/helm-charts/
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trivy-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://aquasecurity.github.io/helm-charts/
+    chart: trivy-operator
+    targetRevision: 0.32.1
+    helm:
+      values: |
+        # ── Operator tolerations ──────────────────────────────────────────────
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+        # ── Trivy scanner config ──────────────────────────────────────────────
+        trivy:
+          # Skip unfixed vulns to reduce noise
+          ignoreUnfixed: true
+          # Allow scan jobs to run on control-plane nodes
+          scanJobTolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        # ── Node collector ────────────────────────────────────────────────────
+        # Collects k8s infra config for InfraAssessmentReport
+        nodeCollector:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        # ── Resources ─────────────────────────────────────────────────────────
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+        # ── Metrics ───────────────────────────────────────────────────────────
+        serviceMonitor:
+          enabled: true
+          labels:
+            release: prometheus
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trivy-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

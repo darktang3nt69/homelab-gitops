@@ -1,0 +1,32 @@
+---
+# =============================================================================
+# PolicyException: Trivy Operator
+# =============================================================================
+# Trivy operator and its ephemeral scan jobs need exemptions because:
+#   - Scan jobs may run without resource limits (scan duration is variable)
+#   - Node-collector runs as root to read host filesystem for infra assessment
+#   - Scan jobs use trivy image which may not be pinned (uses digest internally)
+# =============================================================================
+apiVersion: kyverno.io/v2beta1
+kind: PolicyException
+metadata:
+  name: trivy-exceptions
+  namespace: trivy-system
+spec:
+  exceptions:
+    - policyName: require-resource-limits
+      ruleNames:
+        - require-resource-limits
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+    - policyName: disallow-host-namespaces
+      ruleNames:
+        - host-namespaces
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - trivy-system
