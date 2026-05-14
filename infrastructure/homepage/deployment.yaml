@@ -14,19 +14,22 @@ data:
   settings.yaml: |
     title: Homelab
     headerStyle: boxed
+    providers:
+      longhorn:
+        url: http://longhorn-frontend.longhorn-system
     layout:
       Observability:
-        style: row
-        columns: 4
+        style: column
+        columns: 1
       GitOps & Infrastructure:
-        style: row
-        columns: 3
+        style: column
+        columns: 1
       Security & Storage:
-        style: row
-        columns: 3
+        style: column
+        columns: 1
       Backup:
-        style: row
-        columns: 2
+        style: column
+        columns: 1
 
   widgets.yaml: |
     - kubernetes:
@@ -61,6 +64,11 @@ data:
         disk: /mnt/hdd
         diskUnits: bbytes
         refresh: 3000
+    - longhorn:
+        expanded: true
+        total: true
+        labels: true
+        nodes: true
     - search:
         provider: duckduckgo
         target: _blank
