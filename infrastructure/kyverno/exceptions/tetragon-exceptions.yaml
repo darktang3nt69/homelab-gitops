@@ -1,18 +1,9 @@
 ---
-# =============================================================================
-# PolicyException: Tetragon
-# =============================================================================
-# Tetragon is an eBPF-based security observability DaemonSet that requires:
-#   - privileged: true       — eBPF programs must be loaded from a privileged ctx
-#   - hostPID: true          — must observe all host processes for full coverage
-#   - running as root (uid 0) — required for eBPF map access and BPF syscalls
-# These are fundamental eBPF requirements; they cannot be removed.
-# =============================================================================
 apiVersion: kyverno.io/v2beta1
 kind: PolicyException
 metadata:
   name: tetragon-exceptions
-  namespace: tetragon
+  namespace: kube-system
 spec:
   exceptions:
     - policyName: disallow-privileged-containers
@@ -32,6 +23,8 @@ spec:
       - resources:
           kinds:
             - Pod
-            - DaemonSet
           namespaces:
-            - tetragon
+            - kube-system
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: tetragon
