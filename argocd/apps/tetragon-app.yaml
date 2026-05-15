@@ -52,11 +52,29 @@ spec:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
               operator: Exists
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
 
           serviceMonitor:
             enabled: true
             extraLabels:
               release: prometheus
+
+        # ── Export-stdout sidecar ─────────────────────────────────────────────
+        exporters:
+          stdout:
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 50m
+                memory: 64Mi
 
   destination:
     server: https://kubernetes.default.svc

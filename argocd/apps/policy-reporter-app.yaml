@@ -30,6 +30,13 @@ spec:
           - key: node-role.kubernetes.io/control-plane
             effect: NoSchedule
             operator: Exists
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
 
         # ── Metrics ───────────────────────────────────────────────────────────
         serviceMonitor:
@@ -44,6 +51,13 @@ spec:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
               operator: Exists
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
 
         # ── Kyverno Plugin ────────────────────────────────────────────────────
         plugin:
@@ -53,6 +67,13 @@ spec:
               - key: node-role.kubernetes.io/control-plane
                 effect: NoSchedule
                 operator: Exists
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 50m
+                memory: 64Mi
           # ── Trivy Plugin ───────────────────────────────────────────────────
           trivy:
             enabled: true
@@ -60,6 +81,13 @@ spec:
               - key: node-role.kubernetes.io/control-plane
                 effect: NoSchedule
                 operator: Exists
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 50m
+                memory: 64Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: policy-reporter

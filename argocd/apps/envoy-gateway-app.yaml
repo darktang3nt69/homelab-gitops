@@ -38,6 +38,16 @@ spec:
             logging:
               level:
                 default: info
+
+        deployment:
+          envoyGateway:
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 256Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: envoy-gateway-system

@@ -23,11 +23,31 @@ spec:
     targetRevision: 0.14.9
     helm:
       values: |
+        controller:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+
         speaker:
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
               operator: Exists
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: metallb-system
