@@ -97,6 +97,12 @@ spec:
               memory: 512Mi
               cpu: 500m
 
+        chunksCache:
+          enabled: false
+
+        resultsCache:
+          enabled: false
+
         read:
           replicas: 0
         write:
