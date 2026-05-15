@@ -6,7 +6,7 @@
 #   - Mount volumes for backup/restore operations
 #   - Access host filesystem for PVC backups
 # =============================================================================
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: velero-exceptions

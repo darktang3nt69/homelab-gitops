@@ -6,7 +6,7 @@
 # Promtail: needs hostPath access to read pod logs from /var/log/pods
 # Tetragon: needs privileged for eBPF operations (future)
 # =============================================================================
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: monitoring-exceptions

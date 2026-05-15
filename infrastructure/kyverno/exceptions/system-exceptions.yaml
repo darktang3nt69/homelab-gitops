@@ -5,7 +5,7 @@
 # CoreDNS, metrics-server, and other k3s system components
 # need various elevated permissions to function
 # =============================================================================
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: kube-system-exceptions
@@ -35,7 +35,7 @@ spec:
 # =============================================================================
 # PolicyException: ArgoCD
 # =============================================================================
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: argocd-exceptions
@@ -59,7 +59,7 @@ spec:
 # =============================================================================
 # PolicyException: Security namespace (Vault, ESO)
 # =============================================================================
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: security-exceptions

@@ -7,7 +7,7 @@
 #   - Direct disk access
 #   - NFS mounting for RWX volumes
 # =============================================================================
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: longhorn-exceptions

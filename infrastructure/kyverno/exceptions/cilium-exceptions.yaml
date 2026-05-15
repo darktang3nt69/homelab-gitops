@@ -5,7 +5,7 @@
 # Cilium requires privileged + host network for eBPF operations
 # Without these, Cilium cannot manage network policies or eBPF programs
 # =============================================================================
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: cilium-exceptions

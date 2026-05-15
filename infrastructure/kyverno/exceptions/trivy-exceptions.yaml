@@ -7,7 +7,7 @@
 #   - Node-collector runs as root to read host filesystem for infra assessment
 #   - Scan jobs use trivy image which may not be pinned (uses digest internally)
 # =============================================================================
-apiVersion: kyverno.io/v2beta1
+apiVersion: kyverno.io/v2
 kind: PolicyException
 metadata:
   name: trivy-exceptions
