@@ -170,10 +170,28 @@ spec:
               effect: NoSchedule
               operator: Exists
 
+        prometheus-node-exporter:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+
         # ── kube-state-metrics ────────────────────────────────────────────────
         # collects k8s object metrics (pod status, deployment replicas etc)
         kubeStateMetrics:
           enabled: true
+
+        kube-state-metrics:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
 
         # ── Prometheus Operator ───────────────────────────────────────────────
         prometheusOperator:
@@ -181,6 +199,13 @@ spec:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
               operator: Exists
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
 
         # ── k3s specific ──────────────────────────────────────────────────────
         # k3s uses different paths for some components
