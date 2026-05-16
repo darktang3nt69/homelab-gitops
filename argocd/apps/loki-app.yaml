@@ -117,6 +117,8 @@ spec:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
               operator: Exists
+          # disable default anti-affinity — single node cluster, can't spread
+          affinity: {}
           resources:
             requests:
               cpu: 25m
