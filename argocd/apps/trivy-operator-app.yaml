@@ -37,6 +37,11 @@ spec:
             effect: NoSchedule
             operator: Exists
 
+        # ── Scan job concurrency ─────────────────────────────────────────────
+        operator:
+          scanJobsConcurrentLimit: 1
+          scanJobsRetryDelay: 30s
+
         # ── Trivy scanner config ──────────────────────────────────────────────
         trivy:
           # Skip unfixed vulns to reduce noise
@@ -46,6 +51,14 @@ spec:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
               operator: Exists
+          # Resource limits for each scan job pod
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
 
         # ── Node collector ────────────────────────────────────────────────────
         # Collects k8s infra config for InfraAssessmentReport
