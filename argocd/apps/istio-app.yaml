@@ -32,6 +32,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: istio-system
+  # Istiod patches failurePolicy to Fail at runtime — ignore this field
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      jsonPointers:
+        - /webhooks/0/failurePolicy
   syncPolicy:
     automated:
       prune: true
@@ -208,6 +214,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: istio-system
+  # Kubernetes auto-adds this annotation to DaemonSets — not in Helm chart
+  ignoreDifferences:
+    - group: apps
+      kind: DaemonSet
+      jsonPointers:
+        - /metadata/annotations/deprecated.daemonset.template.generation
   syncPolicy:
     automated:
       prune: true
