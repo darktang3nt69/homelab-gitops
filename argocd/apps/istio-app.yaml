@@ -1,0 +1,217 @@
+---
+# =============================================================================
+# Istio Base — ArgoCD Application
+# =============================================================================
+# Installs Istio CRDs + base configuration
+# Must deploy FIRST — all other Istio charts depend on these CRDs
+#
+# Note: validationFailurePolicy=Fail required for ArgoCD server-side apply
+# Prevents field manager conflict on ValidatingWebhookConfiguration
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: istio-base
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://istio-release.storage.googleapis.com/charts
+    chart: base
+    targetRevision: 1.29.2
+    helm:
+      values: |
+        # required for ArgoCD server-side apply
+        # prevents field manager conflict on ValidatingWebhookConfiguration
+        base:
+          validationFailurePolicy: Fail
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: istio-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# Istiod — ArgoCD Application
+# =============================================================================
+# Istio control plane — service discovery, config distribution, cert mgmt
+# Must deploy AFTER istio-base (needs CRDs)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: istiod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://istio-release.storage.googleapis.com/charts
+    chart: istiod
+    targetRevision: 1.29.2
+    helm:
+      values: |
+        # ambient mode profile
+        profile: ambient
+
+        pilot:
+          # resources for single node homelab
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+
+        # mesh config
+        meshConfig:
+          # enable access logging → Loki
+          accessLogFile: /dev/stdout
+          accessLogEncoding: JSON
+
+          # default proxy config
+          defaultConfig:
+            proxyMetadata:
+              BOOTSTRAP_XDS_AGENT: "true"
+
+        global:
+          # Cilium coexistence — don't manage iptables (Cilium does)
+          proxy:
+            logLevel: warning
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: istio-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# Istio CNI — ArgoCD Application
+# =============================================================================
+# CNI node agent — detects pods added to mesh, sets up traffic redirection
+# Must deploy AFTER istiod
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: istio-cni
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://istio-release.storage.googleapis.com/charts
+    chart: cni
+    targetRevision: 1.29.2
+    helm:
+      values: |
+        # ambient mode
+        profile: ambient
+
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+        # Cilium coexistence
+        # Istio CNI runs alongside Cilium CNI
+        # cni.exclusive=false was set in Cilium already ✅
+        ambient:
+          enabled: true
+
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: istio-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# =============================================================================
+# ztunnel — ArgoCD Application
+# =============================================================================
+# Node proxy DaemonSet — handles mTLS between pods in ambient mesh
+# L4 security: encrypts all pod-to-pod traffic transparently
+# No sidecar needed — runs per-node, not per-pod
+# Must deploy AFTER istio-cni
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ztunnel
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://istio-release.storage.googleapis.com/charts
+    chart: ztunnel
+    targetRevision: 1.29.2
+    helm:
+      values: |
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+
+        # ship ztunnel logs to stdout → Promtail → Loki
+        logLevel: info
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: istio-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

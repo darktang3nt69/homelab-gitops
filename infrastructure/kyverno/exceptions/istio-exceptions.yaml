@@ -1,0 +1,38 @@
+---
+# =============================================================================
+# PolicyException: Istio
+# =============================================================================
+# Istio ambient mode components need elevated permissions:
+#   istio-cni: privileged + hostNetwork (intercepts pod traffic at node level)
+#   ztunnel: privileged + hostNetwork (node-level mTLS proxy)
+#   istiod: needs cluster-wide access for service discovery
+# =============================================================================
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: istio-exceptions
+  namespace: istio-system
+spec:
+  exceptions:
+    - policyName: disallow-privileged-containers
+      ruleNames:
+        - privileged-containers
+    - policyName: disallow-host-namespaces
+      ruleNames:
+        - host-namespaces
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+    - policyName: require-resource-limits
+      ruleNames:
+        - validate-resources
+    - policyName: disallow-latest-tag
+      ruleNames:
+        - require-image-tag
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - istio-system
