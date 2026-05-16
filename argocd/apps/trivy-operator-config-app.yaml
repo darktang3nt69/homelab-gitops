@@ -1,0 +1,35 @@
+---
+# =============================================================================
+# Trivy Operator Config — ArgoCD Application
+# =============================================================================
+# Applies the trivy-operator ConfigMap overrides after the Helm chart is up.
+# Sync wave 3 — runs after the trivy-operator Helm chart (wave 2).
+#
+# Uses client-side apply (no ServerSideApply) so it only touches the specific
+# keys declared in infrastructure/trivy-operator/configmap.yaml without
+# conflicting with the Helm chart's SSA field manager on other keys.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trivy-operator-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/trivy-operator
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trivy-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false

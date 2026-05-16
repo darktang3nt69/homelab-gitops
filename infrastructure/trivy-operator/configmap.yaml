@@ -1,0 +1,25 @@
+---
+# =============================================================================
+# Trivy Operator — ConfigMap overrides
+# =============================================================================
+# Ensures these operator settings are applied regardless of Helm defaults.
+# The trivy-operator reads this ConfigMap at startup for scan job config.
+#
+# Applied by the trivy-operator-config ArgoCD app (sync-wave 3, after chart).
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trivy-operator
+  namespace: trivy-system
+data:
+  # ── Scan job concurrency ───────────────────────────────────────────────────
+  # Limit to 1 concurrent scan job — prevents memory spikes on single-node
+  scanJobsConcurrentLimit: "1"
+  # Wait 30s before retrying a failed scan job
+  scanJobsRetryDelay: "30s"
+
+  # ── Vulnerability scan job container resources ─────────────────────────────
+  # These set the trivy container resources inside each scan job pod
+  vulnerabilityReportsPlugin.trivy.resources.requests.memory: "256Mi"
+  vulnerabilityReportsPlugin.trivy.resources.limits.memory: "512Mi"
