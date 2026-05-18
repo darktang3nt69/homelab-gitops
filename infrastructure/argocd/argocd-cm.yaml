@@ -16,6 +16,9 @@ data:
   # Homepage readonly account for service widget
   accounts.homepage: apiKey
 
+  # darktang3nt admin account
+  accounts.darktang3nt: login
+
   # Exclude Cilium runtime objects that are auto-created by the CNI and
   # are not managed via Git — prevents false OutOfSync noise.
   # Exclude Velero runtime objects (Backup, Restore, etc.) that are created

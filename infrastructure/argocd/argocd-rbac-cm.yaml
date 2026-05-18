@@ -10,4 +10,5 @@ metadata:
 data:
   policy.csv: |
     g, homepage, role:readonly
+    g, darktang3nt, role:admin
   policy.default: role:readonly
