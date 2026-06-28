@@ -70,13 +70,12 @@ spec:
           runAsUser: 568
           runAsGroup: 568
           fsGroup: 568
-          runAsNonRoot: true
+          runAsNonRoot: false
 
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
-          runAsNonRoot: true
-          runAsUser: 568
+          runAsNonRoot: false
           capabilities:
             drop:
               - ALL
