@@ -63,7 +63,7 @@ spec:
             enabled: true
             storageClass: longhorn
             accessMode: ReadWriteOnce
-            size: 2Gi
+            size: 10Gi
             mountPath: /config
 
         podSecurityContext:
