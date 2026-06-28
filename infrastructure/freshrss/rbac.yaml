@@ -1,0 +1,13 @@
+---
+# =============================================================================
+# FreshRSS RBAC
+# =============================================================================
+# ServiceAccount for FreshRSS pod
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: freshrss
+  namespace: freshrss
+  labels:
+    app.kubernetes.io/name: freshrss

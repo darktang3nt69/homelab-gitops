@@ -1,0 +1,39 @@
+---
+# =============================================================================
+# FreshRSS — ArgoCD Application
+# =============================================================================
+# Self-hosted RSS aggregator
+# Purpose: Centralized news/feed reader for homelab
+# Storage: PVC with Longhorn backend (persistent data)
+# Namespace: freshrss
+# URL: freshrss.k8s.darktang3nt.cloud
+#
+# Wave 1: Initial deployment with PVC setup
+#
+# Docs: https://www.freshrss.org/
+# Docker Hub: https://hub.docker.com/r/freshrss/freshrss
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: freshrss
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/freshrss
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: freshrss
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
