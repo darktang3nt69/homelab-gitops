@@ -222,13 +222,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: istio-system
+  # deprecated.daemonset.template.generation added by k3s controller, not in Helm chart
   ignoreDifferences:
     - group: apps
       kind: DaemonSet
       jqPathExpressions:
         - .metadata.annotations
-        - .spec.template.metadata.annotations
-        - .spec.template.spec.containers[].env
   syncPolicy:
     automated:
       prune: true
