@@ -42,10 +42,19 @@ spec:
       serviceAccountName: freshrss
       securityContext:
         fsGroup: 33  # www-data user in the container
+        runAsNonRoot: true
+        runAsUser: 33
       containers:
         - name: freshrss
-          image: freshrss/freshrss:latest
+          image: freshrss/freshrss:1.25.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 33
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - name: http
               containerPort: 80
