@@ -1,6 +1,6 @@
 ---
 # =============================================================================
-# FreshRSS — ArgoCD Application
+# FreshRSS — ArgoCD Application (Helm)
 # =============================================================================
 # Self-hosted RSS aggregator
 # Purpose: Centralized news/feed reader for homelab
@@ -8,10 +8,12 @@
 # Namespace: freshrss
 # URL: freshrss.k8s.darktang3nt.cloud
 #
-# Wave 1: Initial deployment with PVC setup
+# Wave 2: Initial deployment with PVC setup
+# Chart: k8s-home-lab/freshrss (7.2.1)
+# Image: ghcr.io/linuxserver/freshrss:1.28.1
 #
 # Docs: https://www.freshrss.org/
-# Docker Hub: https://hub.docker.com/r/freshrss/freshrss
+# Chart: https://artifacthub.io/packages/helm/k8s-home-lab-repo/freshrss
 # =============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -25,9 +27,93 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/darktang3nt69/homelab-gitops
-    targetRevision: main
-    path: infrastructure/freshrss
+    repoURL: https://k8s-home-lab.github.io/helm-charts
+    chart: freshrss
+    targetRevision: 7.2.1
+    helm:
+      values: |
+        image:
+          repository: ghcr.io/linuxserver/freshrss
+          pullPolicy: IfNotPresent
+          tag: "1.28.1"
+
+        env:
+          TZ: "Asia/Kolkata"
+          PUID: "568"
+          PGID: "568"
+
+        service:
+          main:
+            type: ClusterIP
+            ports:
+              http:
+                port: 80
+                targetPort: 80
+                protocol: TCP
+
+        ingress:
+          main:
+            enabled: false
+            # HTTPRoute is used instead (Envoy Gateway)
+
+        persistence:
+          config:
+            enabled: true
+            storageClass: longhorn
+            accessMode: ReadWriteOnce
+            size: 10Gi
+            mountPath: /config
+
+        podSecurityContext:
+          runAsUser: 568
+          runAsGroup: 568
+          fsGroup: 568
+          runAsNonRoot: true
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 568
+          capabilities:
+            drop:
+              - ALL
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+        affinity:
+          podAntiAffinity: soft
+
+        # Probes for container health
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: 80
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: 80
+              initialDelaySeconds: 10
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 2
   destination:
     server: https://kubernetes.default.svc
     namespace: freshrss
@@ -37,3 +123,9 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
