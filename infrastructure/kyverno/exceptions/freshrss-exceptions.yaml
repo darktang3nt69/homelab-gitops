@@ -1,0 +1,28 @@
+---
+# =============================================================================
+# PolicyException: FreshRSS
+# =============================================================================
+# linuxserver/freshrss starts as root to set up permissions (chown /config, /tmp/nginx),
+# then drops to UID 568. This conflicts with require-non-root-user.
+# CAP_CHOWN is needed for nginx to chown /tmp/nginx on startup.
+# =============================================================================
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: freshrss-exceptions
+  namespace: freshrss
+spec:
+  exceptions:
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - freshrss
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: freshrss
