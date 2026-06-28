@@ -141,7 +141,7 @@ metadata:
     app.kubernetes.io/name: freshrss
 spec:
   parentRefs:
-    - name: eg
+    - name: homelab-gateway
       namespace: envoy-gateway-system
       sectionName: https
   hostnames:
