@@ -106,12 +106,13 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: istio-system
-  # caBundle is injected by istiod at runtime — not in Helm chart
+  # caBundle and failurePolicy are both managed by pilot-discovery at runtime
   ignoreDifferences:
     - group: admissionregistration.k8s.io
       kind: ValidatingWebhookConfiguration
       jqPathExpressions:
         - .webhooks[].clientConfig.caBundle
+        - .webhooks[].failurePolicy
   syncPolicy:
     automated:
       prune: true
