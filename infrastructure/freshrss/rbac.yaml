@@ -1,13 +1,2 @@
----
-# =============================================================================
-# FreshRSS RBAC
-# =============================================================================
-# ServiceAccount for FreshRSS pod
-# =============================================================================
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: freshrss
-  namespace: freshrss
-  labels:
-    app.kubernetes.io/name: freshrss
+# This file is not needed - Helm chart creates ServiceAccount automatically
+# Kept for reference if custom RBAC is needed in the future

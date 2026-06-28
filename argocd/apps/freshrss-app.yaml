@@ -1,6 +1,6 @@
 ---
 # =============================================================================
-# FreshRSS — ArgoCD Application (Helm)
+# FreshRSS — ArgoCD Application (Helm + Kustomize)
 # =============================================================================
 # Self-hosted RSS aggregator
 # Purpose: Centralized news/feed reader for homelab
@@ -27,93 +27,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://k8s-home-lab.github.io/helm-charts
-    chart: freshrss
-    targetRevision: 7.2.1
-    helm:
-      values: |
-        image:
-          repository: ghcr.io/linuxserver/freshrss
-          pullPolicy: IfNotPresent
-          tag: "1.28.1"
-
-        env:
-          TZ: "Asia/Kolkata"
-          PUID: "568"
-          PGID: "568"
-
-        service:
-          main:
-            type: ClusterIP
-            ports:
-              http:
-                port: 80
-                targetPort: 80
-                protocol: TCP
-
-        ingress:
-          main:
-            enabled: false
-            # HTTPRoute is used instead (Envoy Gateway)
-
-        persistence:
-          config:
-            enabled: true
-            storageClass: longhorn
-            accessMode: ReadWriteOnce
-            size: 10Gi
-            mountPath: /config
-
-        podSecurityContext:
-          runAsUser: 568
-          runAsGroup: 568
-          fsGroup: 568
-          runAsNonRoot: true
-
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false
-          runAsNonRoot: true
-          runAsUser: 568
-          capabilities:
-            drop:
-              - ALL
-
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-
-        affinity:
-          podAntiAffinity: soft
-
-        # Probes for container health
-        probes:
-          liveness:
-            enabled: true
-            custom: true
-            spec:
-              httpGet:
-                path: /
-                port: 80
-              initialDelaySeconds: 30
-              periodSeconds: 10
-              timeoutSeconds: 5
-              failureThreshold: 3
-          readiness:
-            enabled: true
-            custom: true
-            spec:
-              httpGet:
-                path: /
-                port: 80
-              initialDelaySeconds: 10
-              periodSeconds: 5
-              timeoutSeconds: 3
-              failureThreshold: 2
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/freshrss
   destination:
     server: https://kubernetes.default.svc
     namespace: freshrss
