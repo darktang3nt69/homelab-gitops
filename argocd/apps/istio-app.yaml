@@ -106,6 +106,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: istio-system
+  # caBundle is injected by istiod at runtime — not in Helm chart
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
   syncPolicy:
     automated:
       prune: true
@@ -113,6 +119,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
 ---
 # =============================================================================
 # Istio CNI — ArgoCD Application
@@ -214,12 +221,13 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: istio-system
-  # Kubernetes auto-adds this annotation to DaemonSets — not in Helm chart
+  # Kubernetes auto-adds annotation; ZTUNNEL_CPU_LIMIT injected from resource limits at runtime
   ignoreDifferences:
     - group: apps
       kind: DaemonSet
       jsonPointers:
         - /metadata/annotations/deprecated.daemonset.template.generation
+        - /spec/template/spec/containers/0/env
   syncPolicy:
     automated:
       prune: true
