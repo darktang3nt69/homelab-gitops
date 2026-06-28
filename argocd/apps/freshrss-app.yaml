@@ -67,15 +67,11 @@ spec:
             mountPath: /config
 
         podSecurityContext:
-          runAsUser: 568
-          runAsGroup: 568
           fsGroup: 568
-          runAsNonRoot: false
 
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
-          runAsNonRoot: false
           capabilities:
             drop:
               - ALL
