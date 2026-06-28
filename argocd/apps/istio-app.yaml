@@ -222,12 +222,13 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: istio-system
-  # Kubernetes auto-adds annotation; ZTUNNEL_CPU_LIMIT injected from resource limits at runtime
+  # Kubernetes auto-adds this annotation to DaemonSets — not in Helm chart
   ignoreDifferences:
     - group: apps
       kind: DaemonSet
+      jsonPointers:
+        - /metadata/annotations/deprecated.daemonset.template.generation
       jqPathExpressions:
-        - .metadata.annotations."deprecated.daemonset.template.generation"
         - .spec.template.spec.containers[].env
   syncPolicy:
     automated:
