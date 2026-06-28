@@ -110,8 +110,8 @@ spec:
   ignoreDifferences:
     - group: admissionregistration.k8s.io
       kind: ValidatingWebhookConfiguration
-      jsonPointers:
-        - /webhooks/0/clientConfig/caBundle
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle
   syncPolicy:
     automated:
       prune: true
@@ -225,9 +225,9 @@ spec:
   ignoreDifferences:
     - group: apps
       kind: DaemonSet
-      jsonPointers:
-        - /metadata/annotations/deprecated.daemonset.template.generation
-        - /spec/template/spec/containers/0/env
+      jqPathExpressions:
+        - .metadata.annotations."deprecated.daemonset.template.generation"
+        - .spec.template.spec.containers[].env
   syncPolicy:
     automated:
       prune: true
@@ -235,3 +235,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
