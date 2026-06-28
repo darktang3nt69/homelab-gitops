@@ -1,6 +1,6 @@
 ---
 # =============================================================================
-# FreshRSS — ArgoCD Application (Helm + Kustomize)
+# FreshRSS — ArgoCD Application (Helm)
 # =============================================================================
 # Self-hosted RSS aggregator
 # Purpose: Centralized news/feed reader for homelab
@@ -11,6 +11,9 @@
 # Wave 2: Initial deployment with PVC setup
 # Chart: k8s-home-lab/freshrss (7.2.1)
 # Image: ghcr.io/linuxserver/freshrss:1.28.1
+#
+# Note: HTTPRoute for Envoy Gateway ingress is managed separately
+# See: infrastructure/freshrss/httproute.yaml
 #
 # Docs: https://www.freshrss.org/
 # Chart: https://artifacthub.io/packages/helm/k8s-home-lab-repo/freshrss
@@ -27,9 +30,88 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/darktang3nt69/homelab-gitops
-    targetRevision: main
-    path: infrastructure/freshrss
+    repoURL: https://k8s-home-lab.github.io/helm-charts
+    chart: freshrss
+    targetRevision: 7.2.1
+    helm:
+      values: |
+        image:
+          repository: ghcr.io/linuxserver/freshrss
+          pullPolicy: IfNotPresent
+          tag: "1.28.1"
+
+        env:
+          TZ: "Asia/Kolkata"
+          PUID: "568"
+          PGID: "568"
+
+        service:
+          main:
+            type: ClusterIP
+            ports:
+              http:
+                port: 80
+                targetPort: 80
+                protocol: TCP
+
+        ingress:
+          main:
+            enabled: false
+
+        persistence:
+          config:
+            enabled: true
+            storageClass: longhorn
+            accessMode: ReadWriteOnce
+            size: 2Gi
+            mountPath: /config
+
+        podSecurityContext:
+          runAsUser: 568
+          runAsGroup: 568
+          fsGroup: 568
+          runAsNonRoot: true
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 568
+          capabilities:
+            drop:
+              - ALL
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: 80
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: 80
+              initialDelaySeconds: 10
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 2
   destination:
     server: https://kubernetes.default.svc
     namespace: freshrss
@@ -45,3 +127,36 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
+---
+# =============================================================================
+# FreshRSS HTTPRoute — Envoy Gateway
+# =============================================================================
+# Exposes FreshRSS via Envoy Gateway using Gateway API
+# URL: freshrss.k8s.darktang3nt.cloud
+#
+# Applied separately to handle Envoy Gateway ingress
+# =============================================================================
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: freshrss
+  namespace: freshrss
+  labels:
+    app.kubernetes.io/name: freshrss
+spec:
+  parentRefs:
+    - name: eg
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - "freshrss.k8s.darktang3nt.cloud"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: freshrss
+          port: 80
+          group: ""
+          kind: Service

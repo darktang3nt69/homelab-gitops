@@ -2,6 +2,9 @@
 # =============================================================================
 # FreshRSS HTTPRoute — Envoy Gateway
 # =============================================================================
+# Note: This is now managed directly by argocd/apps/freshrss-app.yaml
+# Kept here for reference
+#
 # Exposes FreshRSS via Envoy Gateway using Gateway API
 # URL: freshrss.k8s.darktang3nt.cloud
 #

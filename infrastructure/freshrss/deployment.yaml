@@ -1,10 +1,20 @@
-# This file is no longer needed - the Helm chart handles all deployments
-# See argocd/apps/freshrss-app.yaml for Helm chart configuration
+# =============================================================================
+# FreshRSS Deployment Configuration
+# =============================================================================
 #
-# The following resources are now managed by the Helm chart:
+# Note: All deployment configuration is managed by ArgoCD using the Helm chart.
+# 
+# See: argocd/apps/freshrss-app.yaml for the complete Application definition
+# 
+# This directory contains:
+# - HTTPRoute (httproute.yaml) - For Envoy Gateway ingress
+# - Documentation (README.md, MIGRATION.md)
+#
+# The Helm chart automatically creates:
 # - Deployment
-# - Service
+# - Service  
 # - PersistentVolumeClaim
-# - SecurityContext
+# - ConfigMaps
+# - ServiceAccount
 #
-# Only infrastructure/freshrss/httproute.yaml is needed for Envoy Gateway ingress
+# =============================================================================
