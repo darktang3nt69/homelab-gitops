@@ -111,12 +111,19 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: freshrss
+  ignoreDifferences:
+    - group: ""
+      kind: PersistentVolumeClaim
+      jsonPointers:
+        - /spec/volumeName
+        - /spec/storageClassName
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
     retry:
       limit: 5
       backoff:
