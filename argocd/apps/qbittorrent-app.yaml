@@ -1,0 +1,35 @@
+---
+# =============================================================================
+# qBittorrent — ArgoCD Application
+# =============================================================================
+# BitTorrent client for the media automation stack.
+# Downloads go to /data/torrents/{movies,tv,music} on the shared media PVC.
+# Sonarr/Radarr hardlink from there to /data/library/ instantly.
+#
+# URL: https://qbitty.k8s.darktang3nt.cloud
+# Config: /mnt/data/configs/qbitty-config (migrated from docker host)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: qbittorrent
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/media/qbittorrent
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

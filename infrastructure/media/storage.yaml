@@ -49,3 +49,45 @@ spec:
     requests:
       storage: 800Gi
   volumeName: media-data
+---
+# =============================================================================
+# Configs PV/PVC — shared across all media services
+# Backed by /mnt/data/configs on thor. Each service uses subPath to isolate
+# its own config directory.
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-configs
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: media-local
+  local:
+    path: /mnt/data/configs
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - thor
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-configs
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: media-local
+  resources:
+    requests:
+      storage: 50Gi
+  volumeName: media-configs

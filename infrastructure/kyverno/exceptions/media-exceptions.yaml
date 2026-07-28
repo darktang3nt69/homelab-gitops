@@ -1,0 +1,27 @@
+---
+# =============================================================================
+# PolicyException: Media Stack
+# =============================================================================
+# linuxserver.io images start as root to chown config dirs then drop to
+# PUID/PGID (568:568). CAP_CHOWN is required for this init step.
+# =============================================================================
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: media-exceptions
+  namespace: media
+spec:
+  exceptions:
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+    - policyName: disallow-latest-tag
+      ruleNames:
+        - require-image-tag
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - media
