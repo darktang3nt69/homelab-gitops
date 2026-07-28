@@ -1,0 +1,34 @@
+---
+# =============================================================================
+# Prowlarr — ArgoCD Application
+# =============================================================================
+# Indexer manager for the media automation stack.
+# Syncs indexers to Sonarr, Radarr automatically.
+#
+# URL: https://prowlarr.k8s.darktang3nt.cloud
+# Config: /mnt/data/configs/prowlerr-config (migrated from docker host)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prowlarr
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/media/prowlarr
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

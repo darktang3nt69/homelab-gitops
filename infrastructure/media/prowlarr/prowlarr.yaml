@@ -1,0 +1,114 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: prowlarr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prowlarr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prowlarr
+    spec:
+      securityContext:
+        fsGroup: 568
+      containers:
+        - name: prowlarr
+          image: ghcr.io/hotio/prowlarr:release
+          env:
+            - name: PUID
+              value: "568"
+            - name: PGID
+              value: "568"
+            - name: TZ
+              value: "Asia/Kolkata"
+          ports:
+            - name: webui
+              containerPort: 9696
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              subPath: prowlerr-config
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - NET_RAW
+                - NET_ADMIN
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 9696
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 9696
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: media-configs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowlarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: prowlarr
+spec:
+  selector:
+    app.kubernetes.io/name: prowlarr
+  ports:
+    - name: webui
+      port: 9696
+      targetPort: 9696
+      protocol: TCP
+  type: ClusterIP
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: prowlarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: prowlarr
+spec:
+  parentRefs:
+    - name: homelab-gateway
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - "prowlarr.k8s.darktang3nt.cloud"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: prowlarr
+          port: 9696
+          group: ""
+          kind: Service
