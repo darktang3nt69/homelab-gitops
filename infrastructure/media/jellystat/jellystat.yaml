@@ -1,0 +1,176 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellystat-db
+  namespace: media
+  labels:
+    app.kubernetes.io/name: jellystat-db
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jellystat-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jellystat-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_DB
+              value: jellystat
+            - name: POSTGRES_USER
+              value: jellystat
+            - name: POSTGRES_PASSWORD
+              value: jellystatpassword
+            - name: TZ
+              value: "Asia/Kolkata"
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: config
+              mountPath: /var/lib/postgresql/data
+              subPath: jellystat/db
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - jellystat
+            initialDelaySeconds: 30
+            periodSeconds: 15
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: media-configs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellystat-db
+  namespace: media
+  labels:
+    app.kubernetes.io/name: jellystat-db
+spec:
+  selector:
+    app.kubernetes.io/name: jellystat-db
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellystat
+  namespace: media
+  labels:
+    app.kubernetes.io/name: jellystat
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jellystat
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jellystat
+    spec:
+      containers:
+        - name: jellystat
+          image: cyfershepard/jellystat:latest
+          env:
+            - name: POSTGRES_IP
+              value: jellystat-db.media.svc.cluster.local
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: jellystat
+            - name: POSTGRES_PASSWORD
+              value: jellystatpassword
+            - name: POSTGRES_DB
+              value: jellystat
+            - name: JWT_SECRET
+              value: jellystat-jwt-secret-change-me
+            - name: TZ
+              value: "Asia/Kolkata"
+          ports:
+            - name: webui
+              containerPort: 3000
+          volumeMounts:
+            - name: config
+              mountPath: /app/backend/backup-data
+              subPath: jellystat/backup
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: media-configs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellystat
+  namespace: media
+  labels:
+    app.kubernetes.io/name: jellystat
+spec:
+  selector:
+    app.kubernetes.io/name: jellystat
+  ports:
+    - name: webui
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: jellystat
+  namespace: media
+spec:
+  parentRefs:
+    - name: homelab-gateway
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - "jellystat.k8s.darktang3nt.cloud"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: jellystat
+          port: 3000
+          group: ""
+          kind: Service

@@ -1,0 +1,116 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: radarr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: radarr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: radarr
+    spec:
+      securityContext:
+        fsGroup: 568
+      containers:
+        - name: radarr
+          image: ghcr.io/hotio/radarr:release
+          env:
+            - name: PUID
+              value: "568"
+            - name: PGID
+              value: "568"
+            - name: TZ
+              value: "Asia/Kolkata"
+          ports:
+            - name: webui
+              containerPort: 7878
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              subPath: radarr-config
+            - name: data
+              mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - NET_RAW
+                - NET_ADMIN
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 7878
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 7878
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: media-configs
+        - name: data
+          persistentVolumeClaim:
+            claimName: media-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: radarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: radarr
+spec:
+  selector:
+    app.kubernetes.io/name: radarr
+  ports:
+    - name: webui
+      port: 7878
+      targetPort: 7878
+  type: ClusterIP
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: radarr
+  namespace: media
+spec:
+  parentRefs:
+    - name: homelab-gateway
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - "radarr.k8s.darktang3nt.cloud"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: radarr
+          port: 7878
+          group: ""
+          kind: Service
