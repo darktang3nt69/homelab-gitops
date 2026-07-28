@@ -1,0 +1,32 @@
+---
+# =============================================================================
+# FlareSolverr — ArgoCD Application
+# =============================================================================
+# Cloudflare bypass proxy for Prowlarr indexers.
+# Internal only — no external HTTPRoute needed.
+# Prowlarr connects via: http://flaresolverr.media.svc.cluster.local:8191
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flaresolverr
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/media/flaresolverr
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
