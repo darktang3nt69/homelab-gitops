@@ -22,7 +22,7 @@ spec:
         fsGroup: 568
       containers:
         - name: qbittorrent
-          image: lscr.io/linuxserver/qbittorrent:5.1.0
+          image: ghcr.io/hotio/qbittorrent:release
           env:
             - name: PUID
               value: "568"
