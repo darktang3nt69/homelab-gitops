@@ -1,0 +1,40 @@
+---
+# =============================================================================
+# Media Stack — Storage (ArgoCD Application)
+# =============================================================================
+# Manages the shared PV/PVC for all media services.
+# Must sync BEFORE any media service apps (wave 1).
+#
+# PV is backed by /mnt/data/media on node thor (hostPath-style local volume).
+# All media pods mount this single PVC with subPaths — hardlinks work.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: media-storage
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/media
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media
+  ignoreDifferences:
+    - group: ""
+      kind: PersistentVolume
+      jsonPointers:
+        - /spec/claimRef
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true

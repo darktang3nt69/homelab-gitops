@@ -1,0 +1,51 @@
+---
+# =============================================================================
+# Media Stack — Shared Storage
+# =============================================================================
+# Single PV/PVC backed by /mnt/data/media on node thor.
+# All media services (qBittorrent, Sonarr, Radarr, Jellyfin, etc.) mount this
+# same PVC with subPath — same filesystem = hardlinks work between
+# torrents/ and library/ without copying data.
+#
+# Layout on disk:
+#   /mnt/data/media/torrents/{movies,tv,music}   ← qBittorrent download dirs
+#   /mnt/data/media/library/{movies,tv,music}    ← Jellyfin library dirs
+#
+# Sonarr/Radarr see both under /data and hardlink across them instantly.
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-data
+spec:
+  capacity:
+    storage: 800Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: media-local
+  local:
+    path: /mnt/data/media
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - thor
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-data
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: media-local
+  resources:
+    requests:
+      storage: 800Gi
+  volumeName: media-data
