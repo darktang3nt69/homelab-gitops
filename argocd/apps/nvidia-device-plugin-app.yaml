@@ -1,0 +1,52 @@
+---
+# =============================================================================
+# Nvidia Device Plugin — ArgoCD Application
+# =============================================================================
+# Exposes nvidia.com/gpu as a schedulable resource on node thor
+# Requires: Nvidia driver + nvidia-container-runtime configured in containerd
+#
+# GPU: GeForce GTX 1050 Ti (4GB VRAM)
+# Driver: 550.163.01 / CUDA 12.4
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nvidia-device-plugin
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://nvidia.github.io/k8s-device-plugin
+    chart: nvidia-device-plugin
+    targetRevision: 0.17.1
+    helm:
+      values: |
+        # use nvidia runtime class
+        runtimeClassName: nvidia
+
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nvidia-device-plugin
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

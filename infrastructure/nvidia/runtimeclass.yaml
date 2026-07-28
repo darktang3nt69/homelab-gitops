@@ -1,0 +1,8 @@
+---
+# RuntimeClass: nvidia
+# Tells k8s to use nvidia-container-runtime for pods that request it
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: nvidia
+handler: nvidia
