@@ -18,6 +18,9 @@ data:
       longhorn:
         url: http://longhorn-frontend.longhorn-system
     layout:
+      Media:
+        style: column
+        columns: 2
       Observability:
         style: column
         columns: 1
@@ -73,7 +76,79 @@ data:
         provider: duckduckgo
         target: _blank
 
-  services.yaml: ""
+  services.yaml: |
+    - Media:
+        - Jellyfin:
+            href: https://jellyfin.k8s.darktang3nt.cloud
+            description: Media Server (GPU)
+            icon: jellyfin.png
+            namespace: media
+            app: jellyfin
+            widget:
+              type: jellyfin
+              url: http://jellyfin.media.svc.cluster.local:8096
+              key: ""
+        - qBittorrent:
+            href: https://qbitty.k8s.darktang3nt.cloud
+            description: Torrent Client
+            icon: qbittorrent.png
+            namespace: media
+            app: qbittorrent
+            widget:
+              type: qbittorrent
+              url: http://qbittorrent.media.svc.cluster.local:8080
+        - Sonarr:
+            href: https://sonarr.k8s.darktang3nt.cloud
+            description: TV Show Manager
+            icon: sonarr.png
+            namespace: media
+            app: sonarr
+            widget:
+              type: sonarr
+              url: http://sonarr.media.svc.cluster.local:8989
+              key: ""
+        - Radarr:
+            href: https://radarr.k8s.darktang3nt.cloud
+            description: Movie Manager
+            icon: radarr.png
+            namespace: media
+            app: radarr
+            widget:
+              type: radarr
+              url: http://radarr.media.svc.cluster.local:7878
+              key: ""
+        - Prowlarr:
+            href: https://prowlarr.k8s.darktang3nt.cloud
+            description: Indexer Manager
+            icon: prowlarr.png
+            namespace: media
+            app: prowlarr
+            widget:
+              type: prowlarr
+              url: http://prowlarr.media.svc.cluster.local:9696
+              key: ""
+        - Bazarr:
+            href: https://bazarr.k8s.darktang3nt.cloud
+            description: Subtitle Manager
+            icon: bazarr.png
+            namespace: media
+            app: bazarr
+            widget:
+              type: bazarr
+              url: http://bazarr.media.svc.cluster.local:6767
+              key: ""
+        - Jellystat:
+            href: https://jellystat.k8s.darktang3nt.cloud
+            description: Jellyfin Statistics
+            icon: jellystat.png
+            namespace: media
+            app: jellystat
+        - FlareSolverr:
+            href: "#"
+            description: Cloudflare Bypass (internal)
+            icon: flaresolverr.png
+            namespace: media
+            app: flaresolverr
   bookmarks.yaml: ""
   docker.yaml: ""
   custom.css: ""
