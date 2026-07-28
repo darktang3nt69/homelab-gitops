@@ -28,6 +28,17 @@ spec:
         # use nvidia runtime class
         runtimeClassName: nvidia
 
+        # override default NFD-based affinity — single-node homelab, no NFD deployed
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: nvidia.com/gpu.present
+                      operator: In
+                      values:
+                        - "true"
+
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             effect: NoSchedule
