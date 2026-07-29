@@ -41,6 +41,8 @@ spec:
               subPath: jellyfin
             - name: data
               mountPath: /data
+            - name: transcode
+              mountPath: /dev/shm
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -78,6 +80,10 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: media-data
+        - name: transcode
+          emptyDir:
+            medium: Memory
+            sizeLimit: 4Gi
 ---
 apiVersion: v1
 kind: Service
