@@ -1,0 +1,55 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tracearr
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/connorgallopo/Tracearr.git
+    targetRevision: main
+    path: docker/helm/tracearr
+    helm:
+      valuesObject:
+        tracearr:
+          env:
+            TZ: Asia/Kolkata
+            TRUST_PROXY: "true"
+            CORS_ORIGIN: "https://tracearr.k8s.darktang3nt.cloud"
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          backups:
+            enabled: true
+            size: 10Gi
+          imageCache:
+            enabled: true
+            size: 5Gi
+        timescale:
+          persistence:
+            size: 20Gi
+          resources:
+            limits:
+              memory: 2Gi
+        redis:
+          persistence:
+            size: 2Gi
+        ingress:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tracearr
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -2,10 +2,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: jellystat
+  name: tracearr-httproute
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "3"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -13,10 +13,10 @@ spec:
   source:
     repoURL: https://github.com/darktang3nt69/homelab-gitops
     targetRevision: main
-    path: infrastructure/media/jellystat
+    path: infrastructure/tracearr
   destination:
     server: https://kubernetes.default.svc
-    namespace: media
+    namespace: tracearr
   syncPolicy:
     automated:
       prune: true

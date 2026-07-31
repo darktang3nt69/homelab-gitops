@@ -137,12 +137,12 @@ data:
               type: bazarr
               url: http://bazarr.media.svc.cluster.local:6767
               key: ""
-        - Jellystat:
-            href: https://jellystat.k8s.darktang3nt.cloud
-            description: Jellyfin Statistics
-            icon: jellystat.png
-            namespace: media
-            app: jellystat
+        - Tracearr:
+            href: https://tracearr.k8s.darktang3nt.cloud
+            description: Media Server Monitoring
+            icon: tracearr.png
+            namespace: tracearr
+            app: tracearr
         - FlareSolverr:
             href: "#"
             description: Cloudflare Bypass (internal)
