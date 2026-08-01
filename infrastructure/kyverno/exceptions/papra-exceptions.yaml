@@ -1,0 +1,18 @@
+---
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: papra-exceptions
+  namespace: papra
+spec:
+  exceptions:
+    - policyName: disallow-latest-tag
+      ruleNames:
+        - require-image-tag
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - papra

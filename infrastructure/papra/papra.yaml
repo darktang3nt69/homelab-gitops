@@ -1,0 +1,182 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: papra-db
+  namespace: papra
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: papra
+  namespace: papra
+  labels:
+    app.kubernetes.io/name: papra
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: papra
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: papra
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
+      initContainers:
+        - name: copy-db
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -f /db/db.sqlite ]; then
+                echo "Copying initial DB from hostPath..."
+                cp /source-db/db.sqlite /db/db.sqlite
+                echo "Done"
+              else
+                echo "DB already exists, skipping copy"
+              fi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: db
+              mountPath: /db
+            - name: source-db
+              mountPath: /source-db
+      containers:
+        - name: papra
+          image: ghcr.io/papra-hq/papra:latest
+          env:
+            - name: TZ
+              value: "Asia/Kolkata"
+            - name: APP_BASE_URL
+              value: "https://papra.k8s.darktang3nt.cloud"
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: papra-secret
+                  key: auth-secret
+            - name: DATABASE_URL
+              value: "file:/app/app-data/db/db.sqlite"
+            - name: DOCUMENT_STORAGE_DRIVER
+              value: "s3"
+            - name: DOCUMENT_STORAGE_S3_BUCKET_NAME
+              value: "papra"
+            - name: DOCUMENT_STORAGE_S3_REGION
+              value: "auto"
+            - name: DOCUMENT_STORAGE_S3_ENDPOINT
+              value: "http://minio.storage.svc.cluster.local:9000"
+            - name: DOCUMENT_STORAGE_S3_FORCE_PATH_STYLE
+              value: "true"
+            - name: DOCUMENT_STORAGE_USE_LEGACY_STORAGE_KEY_DEFINITION_SYSTEM
+              value: "true"
+            - name: DOCUMENT_STORAGE_S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: rootUser
+            - name: DOCUMENT_STORAGE_S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: rootPassword
+          ports:
+            - name: webui
+              containerPort: 1221
+              protocol: TCP
+          volumeMounts:
+            - name: db
+              mountPath: /app/app-data/db
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 1221
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 1221
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
+      volumes:
+        - name: db
+          persistentVolumeClaim:
+            claimName: papra-db
+        - name: source-db
+          hostPath:
+            path: /mnt/data/configs/papra/app-data/db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: papra
+  namespace: papra
+  labels:
+    app.kubernetes.io/name: papra
+spec:
+  selector:
+    app.kubernetes.io/name: papra
+  ports:
+    - name: webui
+      port: 1221
+      targetPort: 1221
+      protocol: TCP
+  type: ClusterIP
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: papra
+  namespace: papra
+  labels:
+    app.kubernetes.io/name: papra
+spec:
+  parentRefs:
+    - name: homelab-gateway
+      namespace: envoy-gateway-system
+      sectionName: https
+  hostnames:
+    - "papra.k8s.darktang3nt.cloud"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: papra
+          port: 1221
+          group: ""
+          kind: Service
