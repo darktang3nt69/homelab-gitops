@@ -17,6 +17,7 @@ spec:
   parentRefs:
     - name: homelab-gateway
       namespace: envoy-gateway-system
+      sectionName: https
   hostnames:
     - "logs.k8s.darktang3nt.cloud"
   rules:
