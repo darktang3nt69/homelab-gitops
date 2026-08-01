@@ -1,0 +1,21 @@
+---
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: affine-exceptions
+  namespace: affine
+spec:
+  exceptions:
+    - policyName: disallow-latest-tag
+      ruleNames:
+        - require-image-tag
+    - policyName: require-non-root-user
+      ruleNames:
+        - check-runasnonroot
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+          namespaces:
+            - affine
