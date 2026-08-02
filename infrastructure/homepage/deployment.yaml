@@ -41,7 +41,7 @@ data:
           cpu: true
           memory: true
           showLabel: true
-          label: "thor"
+          label: "homelab"
         nodes:
           show: true
           cpu: true
@@ -54,18 +54,6 @@ data:
         memory: true
         cputemp: true
         uptime: true
-        refresh: 3000
-    - resources:
-        label: SSD
-        expanded: true
-        disk: /mnt/ssd
-        diskUnits: bbytes
-        refresh: 3000
-    - resources:
-        label: HDD
-        expanded: true
-        disk: /mnt/hdd
-        diskUnits: bbytes
         refresh: 3000
     - longhorn:
         expanded: true
@@ -177,6 +165,8 @@ spec:
       serviceAccountName: homepage
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: hephaestus
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           effect: NoSchedule
@@ -242,24 +232,12 @@ spec:
               subPath: custom.js
             - mountPath: /app/config/logs
               name: logs
-            - mountPath: /mnt/ssd
-              name: disk-ssd
-              readOnly: true
-            - mountPath: /mnt/hdd
-              name: disk-hdd
-              readOnly: true
       volumes:
         - name: homepage-config
           configMap:
             name: homepage
         - name: logs
           emptyDir: {}
-        - name: disk-ssd
-          hostPath:
-            path: /mnt/ssd
-        - name: disk-hdd
-          hostPath:
-            path: /mnt/hdd
 ---
 apiVersion: v1
 kind: Service
