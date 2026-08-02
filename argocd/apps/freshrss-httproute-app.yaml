@@ -1,0 +1,35 @@
+---
+# =============================================================================
+# FreshRSS HTTPRoute — ArgoCD Application
+# =============================================================================
+# Exposes FreshRSS via Envoy Gateway using Gateway API
+# URL: freshrss.k8s.darktang3nt.cloud
+#
+# Separate Application (wave 3) so the freshrss namespace exists
+# (created by the freshrss Helm app at wave 2) before this HTTPRoute
+# is applied. Mirrors tracearr-httproute-app.yaml's pattern.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: freshrss-httproute
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/darktang3nt69/homelab-gitops
+    targetRevision: main
+    path: infrastructure/freshrss
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: freshrss
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

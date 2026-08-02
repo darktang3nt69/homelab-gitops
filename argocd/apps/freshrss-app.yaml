@@ -130,36 +130,3 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
----
-# =============================================================================
-# FreshRSS HTTPRoute — Envoy Gateway
-# =============================================================================
-# Exposes FreshRSS via Envoy Gateway using Gateway API
-# URL: freshrss.k8s.darktang3nt.cloud
-#
-# Applied separately to handle Envoy Gateway ingress
-# =============================================================================
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: freshrss
-  namespace: freshrss
-  labels:
-    app.kubernetes.io/name: freshrss
-spec:
-  parentRefs:
-    - name: homelab-gateway
-      namespace: envoy-gateway-system
-      sectionName: https
-  hostnames:
-    - "freshrss.k8s.darktang3nt.cloud"
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - name: freshrss
-          port: 80
-          group: ""
-          kind: Service
