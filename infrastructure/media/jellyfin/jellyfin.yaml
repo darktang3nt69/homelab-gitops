@@ -18,6 +18,8 @@ spec:
       labels:
         app.kubernetes.io/name: jellyfin
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: thor
       runtimeClassName: nvidia
       securityContext:
         fsGroup: 568

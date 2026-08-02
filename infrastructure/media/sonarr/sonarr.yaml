@@ -18,6 +18,8 @@ spec:
       labels:
         app.kubernetes.io/name: sonarr
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: thor
       securityContext:
         fsGroup: 568
       containers:
