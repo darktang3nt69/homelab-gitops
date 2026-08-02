@@ -24,6 +24,20 @@ spec:
 #   - All HTTPS traffic decrypted here
 #   - Internal pod traffic is HTTP (Istio handles mTLS later)
 # =============================================================================
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: homelab-gateway-proxy-config
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        pod:
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -34,6 +48,11 @@ metadata:
     # *.darktang3nt.cloud A record = 192.168.1.200
     metallb.universe.tf/loadBalancerIPs: "192.168.1.200"
 spec:
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: homelab-gateway-proxy-config
   gatewayClassName: eg
   listeners:
     # HTTP listener — redirects to HTTPS

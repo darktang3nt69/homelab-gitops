@@ -26,6 +26,8 @@ spec:
     helm:
       values: |
         # ── Core ─────────────────────────────────────────────────────────────
+        nodeSelector:
+          kubernetes.io/hostname: hephaestus
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             effect: NoSchedule
@@ -47,6 +49,8 @@ spec:
         # ── UI ────────────────────────────────────────────────────────────────
         ui:
           enabled: true
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
@@ -63,6 +67,8 @@ spec:
         plugin:
           kyverno:
             enabled: true
+            nodeSelector:
+              kubernetes.io/hostname: hephaestus
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 effect: NoSchedule
@@ -77,6 +83,8 @@ spec:
           # ── Trivy Plugin ───────────────────────────────────────────────────
           trivy:
             enabled: true
+            nodeSelector:
+              kubernetes.io/hostname: hephaestus
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 effect: NoSchedule

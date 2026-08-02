@@ -82,6 +82,9 @@ spec:
               cpu: 500m
               memory: 512Mi
 
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
+
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule

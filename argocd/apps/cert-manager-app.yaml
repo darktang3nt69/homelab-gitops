@@ -28,6 +28,9 @@ spec:
         crds:
           enabled: true
 
+        nodeSelector:
+          kubernetes.io/hostname: hephaestus
+
         resources:
           requests:
             cpu: 50m
@@ -37,6 +40,8 @@ spec:
             memory: 128Mi
 
         cainjector:
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           resources:
             requests:
               cpu: 25m
@@ -46,6 +51,8 @@ spec:
               memory: 128Mi
 
         webhook:
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           resources:
             requests:
               cpu: 10m

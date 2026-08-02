@@ -52,6 +52,8 @@ spec:
       labels:
         app.kubernetes.io/name: affine-postgres
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: hephaestus
       securityContext:
         fsGroup: 999
       containers:
@@ -139,6 +141,8 @@ spec:
       labels:
         app.kubernetes.io/name: affine-redis
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: hephaestus
       securityContext:
         fsGroup: 999
       containers:
@@ -257,6 +261,8 @@ spec:
       labels:
         app.kubernetes.io/name: affine
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: hephaestus
       initContainers:
         - name: wait-postgres
           image: busybox:1.37

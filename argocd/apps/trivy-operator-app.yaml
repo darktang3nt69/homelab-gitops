@@ -31,7 +31,9 @@ spec:
     targetRevision: 0.32.1
     helm:
       values: |
-        # ── Operator tolerations ──────────────────────────────────────────────
+        # ── Operator scheduling ──────────────────────────────────────────────
+        nodeSelector:
+          kubernetes.io/hostname: hephaestus
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             effect: NoSchedule

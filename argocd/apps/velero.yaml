@@ -139,6 +139,8 @@ spec:
             enabled: true
 
         # ── Scheduling ────────────────────────────────────────────────────────
+        nodeSelector:
+          kubernetes.io/hostname: hephaestus
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             effect: NoSchedule

@@ -30,6 +30,8 @@ spec:
         # single node — no need for multiple replicas
         admissionController:
           replicas: 1
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
@@ -49,6 +51,8 @@ spec:
 
         backgroundController:
           replicas: 1
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
@@ -63,6 +67,8 @@ spec:
 
         cleanupController:
           replicas: 1
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
@@ -77,6 +83,8 @@ spec:
 
         reportsController:
           replicas: 1
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule

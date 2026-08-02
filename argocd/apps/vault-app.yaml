@@ -145,6 +145,9 @@ spec:
           # on a single node cluster
           affinity: ""
 
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
+
           # Allow scheduling on control-plane node (single node)
           tolerations:
             - key: node-role.kubernetes.io/control-plane

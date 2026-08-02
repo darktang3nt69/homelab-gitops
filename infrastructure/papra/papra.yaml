@@ -31,6 +31,8 @@ spec:
       labels:
         app.kubernetes.io/name: papra
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: hephaestus
       securityContext:
         fsGroup: 1000
         runAsUser: 1000
