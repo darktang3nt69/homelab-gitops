@@ -84,6 +84,9 @@ spec:
             storageClass: longhorn
             size: 5Gi
 
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
+
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
@@ -113,6 +116,8 @@ spec:
         gateway:
           enabled: true
           replicas: 1
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule

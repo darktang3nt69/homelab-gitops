@@ -66,6 +66,9 @@ spec:
           storageClassName: longhorn
           size: 5Gi   # WAL cache only — long term in MinIO
 
+        nodeSelector:
+          kubernetes.io/hostname: hephaestus
+
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             effect: NoSchedule

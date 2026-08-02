@@ -77,6 +77,9 @@ spec:
               memory: 512Mi
               cpu: 500m
 
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
+
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
@@ -117,6 +120,9 @@ spec:
                 memory: 1Gi
                 cpu: 500m
 
+            nodeSelector:
+              kubernetes.io/hostname: hephaestus
+
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 effect: NoSchedule
@@ -143,6 +149,9 @@ spec:
                   resources:
                     requests:
                       storage: 2Gi
+
+            nodeSelector:
+              kubernetes.io/hostname: hephaestus
 
             tolerations:
               - key: node-role.kubernetes.io/control-plane
@@ -185,6 +194,8 @@ spec:
           enabled: true
 
         kube-state-metrics:
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           resources:
             requests:
               cpu: 10m
@@ -195,6 +206,8 @@ spec:
 
         # ── Prometheus Operator ───────────────────────────────────────────────
         prometheusOperator:
+          nodeSelector:
+            kubernetes.io/hostname: hephaestus
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule
