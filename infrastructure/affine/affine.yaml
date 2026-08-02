@@ -257,10 +257,6 @@ spec:
       labels:
         app.kubernetes.io/name: affine
     spec:
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
       initContainers:
         - name: wait-postgres
           image: busybox:1.37
@@ -302,8 +298,6 @@ spec:
               containerPort: 3010
           securityContext:
             allowPrivilegeEscalation: false
-            runAsNonRoot: true
-            runAsUser: 1000
           resources:
             requests:
               cpu: 200m
