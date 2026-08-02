@@ -150,6 +150,11 @@ spec:
       kind: StatefulSet
       jsonPointers:
         - /status/terminatingReplicas
+    - group: apps
+      kind: StatefulSet
+      name: loki
+      jsonPointers:
+        - /spec/volumeClaimTemplates
   syncPolicy:
     automated:
       prune: true
