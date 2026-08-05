@@ -64,22 +64,12 @@ spec:
               memory: 64Mi
 
         # ── Kyverno Plugin ────────────────────────────────────────────────────
+        # disabled: Kyverno was removed from the cluster entirely after it
+        # caused two cluster-wide outages by blocking writes; this plugin has
+        # nothing to talk to and just crashloops
         plugin:
           kyverno:
-            enabled: true
-            nodeSelector:
-              kubernetes.io/hostname: hephaestus
-            tolerations:
-              - key: node-role.kubernetes.io/control-plane
-                effect: NoSchedule
-                operator: Exists
-            resources:
-              requests:
-                cpu: 10m
-                memory: 32Mi
-              limits:
-                cpu: 50m
-                memory: 64Mi
+            enabled: false
           # ── Trivy Plugin ───────────────────────────────────────────────────
           trivy:
             enabled: true
