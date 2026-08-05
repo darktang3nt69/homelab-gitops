@@ -78,7 +78,7 @@ spec:
               cpu: 500m
 
           nodeSelector:
-            kubernetes.io/hostname: thor
+            kubernetes.io/hostname: hephaestus
 
           tolerations:
             - key: node-role.kubernetes.io/control-plane
@@ -121,7 +121,7 @@ spec:
                 cpu: 500m
 
             nodeSelector:
-              kubernetes.io/hostname: thor
+              kubernetes.io/hostname: hephaestus
 
             tolerations:
               - key: node-role.kubernetes.io/control-plane
@@ -151,7 +151,7 @@ spec:
                       storage: 2Gi
 
             nodeSelector:
-              kubernetes.io/hostname: thor
+              kubernetes.io/hostname: hephaestus
 
             tolerations:
               - key: node-role.kubernetes.io/control-plane
@@ -195,7 +195,7 @@ spec:
 
         kube-state-metrics:
           nodeSelector:
-            kubernetes.io/hostname: thor
+            kubernetes.io/hostname: hephaestus
           resources:
             requests:
               cpu: 10m
@@ -207,7 +207,7 @@ spec:
         # ── Prometheus Operator ───────────────────────────────────────────────
         prometheusOperator:
           nodeSelector:
-            kubernetes.io/hostname: thor
+            kubernetes.io/hostname: hephaestus
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule

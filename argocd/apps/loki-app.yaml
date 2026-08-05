@@ -85,7 +85,7 @@ spec:
             size: 5Gi
 
           nodeSelector:
-            kubernetes.io/hostname: thor
+            kubernetes.io/hostname: hephaestus
 
           tolerations:
             - key: node-role.kubernetes.io/control-plane
@@ -117,7 +117,7 @@ spec:
           enabled: true
           replicas: 1
           nodeSelector:
-            kubernetes.io/hostname: thor
+            kubernetes.io/hostname: hephaestus
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               effect: NoSchedule

@@ -28,8 +28,19 @@ spec:
         crds:
           enabled: true
 
-        nodeSelector:
-          kubernetes.io/hostname: thor
+        # HA: 2 replicas spread across thor + hephaestus via anti-affinity
+        # so cert-manager survives either node going down
+        replicaCount: 2
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/component: controller
+                      app.kubernetes.io/instance: cert-manager
+                  topologyKey: kubernetes.io/hostname
 
         resources:
           requests:
@@ -40,8 +51,17 @@ spec:
             memory: 128Mi
 
         cainjector:
-          nodeSelector:
-            kubernetes.io/hostname: thor
+          replicaCount: 2
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    labelSelector:
+                      matchLabels:
+                        app.kubernetes.io/component: cainjector
+                        app.kubernetes.io/instance: cert-manager
+                    topologyKey: kubernetes.io/hostname
           resources:
             requests:
               cpu: 25m
@@ -51,8 +71,17 @@ spec:
               memory: 128Mi
 
         webhook:
-          nodeSelector:
-            kubernetes.io/hostname: thor
+          replicaCount: 2
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    labelSelector:
+                      matchLabels:
+                        app.kubernetes.io/component: webhook
+                        app.kubernetes.io/instance: cert-manager
+                    topologyKey: kubernetes.io/hostname
           resources:
             requests:
               cpu: 10m

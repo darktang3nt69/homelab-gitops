@@ -166,7 +166,7 @@ spec:
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
       nodeSelector:
-        kubernetes.io/hostname: thor
+        kubernetes.io/hostname: hephaestus
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           effect: NoSchedule

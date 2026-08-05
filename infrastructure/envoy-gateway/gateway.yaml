@@ -34,9 +34,20 @@ spec:
     type: Kubernetes
     kubernetes:
       envoyDeployment:
+        # HA: 2 replicas spread across thor + hephaestus so ingress survives
+        # either node going down (this pin was the single point of failure
+        # that took down the whole cluster during the hephaestus incident)
+        replicas: 2
         pod:
-          nodeSelector:
-            kubernetes.io/hostname: thor
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    labelSelector:
+                      matchLabels:
+                        gateway.envoyproxy.io/owning-gateway-name: homelab-gateway
+                    topologyKey: kubernetes.io/hostname
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
