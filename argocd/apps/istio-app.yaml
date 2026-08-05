@@ -83,7 +83,7 @@ spec:
               memory: 512Mi
 
           nodeSelector:
-            kubernetes.io/hostname: hephaestus
+            kubernetes.io/hostname: thor
 
           tolerations:
             - key: node-role.kubernetes.io/control-plane

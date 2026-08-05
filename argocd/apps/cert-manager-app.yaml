@@ -29,7 +29,7 @@ spec:
           enabled: true
 
         nodeSelector:
-          kubernetes.io/hostname: hephaestus
+          kubernetes.io/hostname: thor
 
         resources:
           requests:
@@ -41,7 +41,7 @@ spec:
 
         cainjector:
           nodeSelector:
-            kubernetes.io/hostname: hephaestus
+            kubernetes.io/hostname: thor
           resources:
             requests:
               cpu: 25m
@@ -52,7 +52,7 @@ spec:
 
         webhook:
           nodeSelector:
-            kubernetes.io/hostname: hephaestus
+            kubernetes.io/hostname: thor
           resources:
             requests:
               cpu: 10m

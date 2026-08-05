@@ -34,7 +34,7 @@ spec:
         verdictFilter: DROPPED
 
         nodeSelector:
-          kubernetes.io/hostname: hephaestus
+          kubernetes.io/hostname: thor
 
         tolerations:
           - key: node-role.kubernetes.io/control-plane

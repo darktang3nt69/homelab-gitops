@@ -53,7 +53,7 @@ spec:
         app.kubernetes.io/name: affine-postgres
     spec:
       nodeSelector:
-        kubernetes.io/hostname: hephaestus
+        kubernetes.io/hostname: thor
       securityContext:
         fsGroup: 999
       containers:
@@ -142,7 +142,7 @@ spec:
         app.kubernetes.io/name: affine-redis
     spec:
       nodeSelector:
-        kubernetes.io/hostname: hephaestus
+        kubernetes.io/hostname: thor
       securityContext:
         fsGroup: 999
       containers:
@@ -262,7 +262,7 @@ spec:
         app.kubernetes.io/name: affine
     spec:
       nodeSelector:
-        kubernetes.io/hostname: hephaestus
+        kubernetes.io/hostname: thor
       initContainers:
         - name: wait-postgres
           image: busybox:1.37

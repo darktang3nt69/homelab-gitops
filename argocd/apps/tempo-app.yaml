@@ -67,7 +67,7 @@ spec:
           size: 5Gi   # WAL cache only — long term in MinIO
 
         nodeSelector:
-          kubernetes.io/hostname: hephaestus
+          kubernetes.io/hostname: thor
 
         tolerations:
           - key: node-role.kubernetes.io/control-plane

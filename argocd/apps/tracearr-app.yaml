@@ -18,7 +18,7 @@ spec:
       valuesObject:
         tracearr:
           nodeSelector:
-            kubernetes.io/hostname: hephaestus
+            kubernetes.io/hostname: thor
           env:
             TZ: Asia/Kolkata
             TRUST_PROXY: "true"
@@ -37,7 +37,7 @@ spec:
             size: 5Gi
         timescale:
           nodeSelector:
-            kubernetes.io/hostname: hephaestus
+            kubernetes.io/hostname: thor
           persistence:
             size: 20Gi
           resources:
@@ -45,7 +45,7 @@ spec:
               memory: 2Gi
         redis:
           nodeSelector:
-            kubernetes.io/hostname: hephaestus
+            kubernetes.io/hostname: thor
           persistence:
             size: 2Gi
         ingress:
