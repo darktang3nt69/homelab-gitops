@@ -83,7 +83,10 @@ spec:
               memory: 512Mi
 
           # HA: 2 replicas spread across thor + hephaestus via anti-affinity
-          replicaCount: 2
+          # istiod has an HPA (autoscaleEnabled: true, min 1/max 5) which
+          # owns .spec.replicas — replicaCount alone is ignored once the
+          # HPA exists, so the floor has to be raised via autoscaleMin
+          autoscaleMin: 2
           affinity:
             podAntiAffinity:
               preferredDuringSchedulingIgnoredDuringExecution:
