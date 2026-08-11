@@ -1,0 +1,39 @@
+---
+# =============================================================================
+# OpenWrt Router — external target (Service + Endpoints, no selector)
+# =============================================================================
+# The router isn't a k8s pod, so there's no label selector to match.
+# This Service/Endpoints pair points Kubernetes at the router's LAN IP
+# so Prometheus can scrape it via a ServiceMonitor like any other target.
+#
+# Exporter: prometheus-node-exporter-lua running on OpenWrt (Asus RT-AX53U)
+# Router LAN IP: 192.168.1.2 — update here if it ever changes (static
+# reservation recommended on the LAN interface DHCP server)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: openwrt-router
+  namespace: monitoring
+  labels:
+    app: openwrt-router
+spec:
+  ports:
+    - name: metrics
+      port: 9100
+      protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: openwrt-router
+  namespace: monitoring
+  labels:
+    app: openwrt-router
+subsets:
+  - addresses:
+      - ip: 192.168.1.2
+    ports:
+      - name: metrics
+        port: 9100
+        protocol: TCP
