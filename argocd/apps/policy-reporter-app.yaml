@@ -71,21 +71,10 @@ spec:
           kyverno:
             enabled: false
           # ── Trivy Plugin ───────────────────────────────────────────────────
+          # disabled: trivy-operator was removed from the cluster; this
+          # plugin has nothing to talk to
           trivy:
-            enabled: true
-            nodeSelector:
-              kubernetes.io/hostname: hephaestus
-            tolerations:
-              - key: node-role.kubernetes.io/control-plane
-                effect: NoSchedule
-                operator: Exists
-            resources:
-              requests:
-                cpu: 10m
-                memory: 32Mi
-              limits:
-                cpu: 50m
-                memory: 64Mi
+            enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: policy-reporter
