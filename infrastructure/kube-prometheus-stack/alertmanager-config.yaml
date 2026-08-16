@@ -7,8 +7,13 @@
 #
 # Watchdog (the synthetic always-firing alert that verifies the pipeline
 # itself is alive) stays suppressed — it's a heartbeat check, not something
-# to page on. Everything else — built-in k8s health alerts, the OpenWrt
-# router alerts — goes to Discord.
+# to page on. InfoInhibitor (the synthetic alert that exists solely so the
+# inhibitRule below has something to key off of, suppressing real
+# severity=info alerts) is suppressed too — it's an internal plumbing
+# signal, not something a human needs to see. Suppressing its route doesn't
+# affect its role in the inhibit rule; routing and inhibition are separate.
+# Everything else — built-in k8s health alerts, the OpenWrt router alerts —
+# goes to Discord.
 #
 # discord-webhook secret created manually (not in git):
 #   kubectl create secret generic discord-webhook -n monitoring \
@@ -31,6 +36,11 @@ spec:
         matchers:
           - name: alertname
             value: Watchdog
+            matchType: "="
+      - receiver: "null"
+        matchers:
+          - name: alertname
+            value: InfoInhibitor
             matchType: "="
   inhibitRules:
     - sourceMatch:
