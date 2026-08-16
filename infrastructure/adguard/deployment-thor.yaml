@@ -1,0 +1,73 @@
+---
+# =============================================================================
+# AdGuard Home — Secondary instance (thor)
+# =============================================================================
+# Independent second instance for DNS redundancy — NOT a cluster/replica of
+# the primary (adguard-home, on hephaestus). AdGuard Home has no built-in
+# state sharing; this is the standard "two independent resolvers, client
+# picks primary/secondary" pattern, same as running 8.8.8.8 + 8.8.4.4.
+#
+# Config/blocklists/login were seeded as a one-time copy from the primary's
+# AdGuardHome.yaml so both start out identical, but they will NOT stay in
+# sync automatically — query log and any live client-profile edits made on
+# one won't appear on the other.
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adguard-home-thor
+  namespace: adguard
+  labels:
+    app.kubernetes.io/name: adguard-home-thor
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: adguard-home-thor
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: adguard-home-thor
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: thor
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+          operator: Exists
+      containers:
+        - name: adguard-home
+          image: adguard/adguardhome:v0.107.78
+          ports:
+            - name: dns-udp
+              containerPort: 53
+              protocol: UDP
+            - name: dns-tcp
+              containerPort: 53
+              protocol: TCP
+            - name: web-ui-setup
+              containerPort: 3000
+              protocol: TCP
+            - name: web-ui
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /opt/adguardhome/conf
+              subPath: conf
+            - name: data
+              mountPath: /opt/adguardhome/work
+              subPath: work
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: adguard-data-thor

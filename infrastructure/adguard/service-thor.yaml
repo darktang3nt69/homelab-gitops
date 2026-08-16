@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adguard-home-thor
+  namespace: adguard
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: "192.168.2.203"
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: adguard-home-thor
+  ports:
+    - name: dns-udp
+      port: 53
+      protocol: UDP
+      targetPort: 53
+    - name: dns-tcp
+      port: 53
+      protocol: TCP
+      targetPort: 53
+    - name: web-ui-setup
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    - name: web-ui
+      port: 80
+      protocol: TCP
+      targetPort: 80
