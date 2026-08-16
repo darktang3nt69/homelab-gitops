@@ -24,7 +24,7 @@ spec:
         fsGroup: 568
       containers:
         - name: recyclarr
-          image: ghcr.io/recyclarr/recyclarr:latest
+          image: ghcr.io/recyclarr/recyclarr:7.4.0
           env:
             - name: PUID
               value: "568"
