@@ -1,0 +1,94 @@
+---
+# =============================================================================
+# OpenWrt Router — Automated Config Backup
+# =============================================================================
+# Nightly: SSH into the router, take a fresh sysupgrade config backup,
+# pull it, upload to MinIO (bucket: openwrt-backups), prune anything
+# older than 30 days.
+#
+# Uses a dedicated SSH key (openwrt-backup-ssh-key) and scoped MinIO
+# credentials (openwrt-backup-minio-credentials) — see backup-secrets.yaml
+# for why these are separate from the admin key / MinIO root credentials.
+# =============================================================================
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: openwrt-backup
+  namespace: monitoring
+spec:
+  schedule: "17 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/hostname: thor
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule
+              operator: Exists
+          containers:
+            - name: backup
+              image: alpine:3.20
+              env:
+                - name: MINIO_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: openwrt-backup-minio-credentials
+                      key: access-key
+                - name: MINIO_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: openwrt-backup-minio-credentials
+                      key: secret-key
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  apk add --no-cache openssh-client curl >/dev/null
+
+                  curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+                  chmod +x /usr/local/bin/mc
+
+                  mkdir -p ~/.ssh
+                  cp /keys/id_ed25519 ~/.ssh/id_ed25519
+                  chmod 600 ~/.ssh/id_ed25519
+                  ssh-keyscan -H 192.168.2.1 >> ~/.ssh/known_hosts 2>/dev/null
+
+                  FNAME="openwrt-backup-$(date -u +%Y%m%d-%H%M%S).tar.gz"
+                  SSH="ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no root@192.168.2.1"
+
+                  $SSH "sysupgrade -b /tmp/$FNAME"
+                  scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no "root@192.168.2.1:/tmp/$FNAME" "/tmp/$FNAME"
+                  $SSH "rm -f /tmp/$FNAME"
+
+                  mc alias set openwrt http://minio.storage:9000 "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
+                  mc cp "/tmp/$FNAME" "openwrt/openwrt-backups/$FNAME"
+                  echo "uploaded $FNAME"
+
+                  # retention: keep the newest 30 backups
+                  mc ls openwrt/openwrt-backups/ | awk '{print $NF}' | sort | head -n -30 | while read -r old; do
+                    [ -n "$old" ] && mc rm "openwrt/openwrt-backups/$old" && echo "pruned $old"
+                  done
+              volumeMounts:
+                - name: ssh-key
+                  mountPath: /keys
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+          volumes:
+            - name: ssh-key
+              secret:
+                secretName: openwrt-backup-ssh-key
+                defaultMode: 0400
