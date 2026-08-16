@@ -8,9 +8,9 @@
 # picks primary/secondary" pattern, same as running 8.8.8.8 + 8.8.4.4.
 #
 # Config/blocklists/login were seeded as a one-time copy from the primary's
-# AdGuardHome.yaml so both start out identical, but they will NOT stay in
-# sync automatically — query log and any live client-profile edits made on
-# one won't appear on the other.
+# AdGuardHome.yaml so both start out identical. adguard-sync (sync.yaml)
+# keeps filters/clients/DNS/DHCP/general settings aligned going forward —
+# query logs and stats are intentionally NOT synced, they stay per-instance.
 # =============================================================================
 apiVersion: apps/v1
 kind: Deployment

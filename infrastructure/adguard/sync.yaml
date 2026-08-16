@@ -1,0 +1,81 @@
+---
+# =============================================================================
+# AdGuardHome-Sync — keeps the two instances aligned
+# =============================================================================
+# Pushes config from adguard-home (hephaestus, origin) to adguard-home-thor
+# (thor, replica) on a schedule: filters/blocklists, per-device client
+# profiles, DNS/DHCP settings, general settings, theme, TLS config.
+#
+# Does NOT sync query logs or stats (those stay per-instance) or the admin
+# account itself — the sync tool authenticates to both using the same
+# credentials, from adguard-sync-credentials (created manually, not in git):
+#   kubectl create secret generic adguard-sync-credentials -n adguard \
+#     --from-literal=username=<admin-username> \
+#     --from-literal=password=<admin-password>
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adguard-sync
+  namespace: adguard
+  labels:
+    app.kubernetes.io/name: adguard-sync
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: adguard-sync
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: adguard-sync
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: hephaestus
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+          operator: Exists
+      containers:
+        - name: adguard-sync
+          image: ghcr.io/bakito/adguardhome-sync:v0.7.9
+          env:
+            - name: ORIGIN_URL
+              value: http://adguard-home.adguard.svc.cluster.local
+            - name: ORIGIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: adguard-sync-credentials
+                  key: username
+            - name: ORIGIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: adguard-sync-credentials
+                  key: password
+            - name: REPLICA0_URL
+              value: http://adguard-home-thor.adguard.svc.cluster.local
+            - name: REPLICA0_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: adguard-sync-credentials
+                  key: username
+            - name: REPLICA0_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: adguard-sync-credentials
+                  key: password
+            - name: CRON
+              value: "*/15 * * * *"
+            - name: RUN_ON_START
+              value: "true"
+            - name: API_PORT
+              value: "0"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
