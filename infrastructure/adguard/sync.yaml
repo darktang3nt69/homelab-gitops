@@ -54,14 +54,14 @@ spec:
                 secretKeyRef:
                   name: adguard-sync-credentials
                   key: password
-            - name: REPLICA0_URL
+            - name: REPLICA1_URL
               value: http://adguard-home-thor.adguard.svc.cluster.local
-            - name: REPLICA0_USERNAME
+            - name: REPLICA1_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: adguard-sync-credentials
                   key: username
-            - name: REPLICA0_PASSWORD
+            - name: REPLICA1_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: adguard-sync-credentials
