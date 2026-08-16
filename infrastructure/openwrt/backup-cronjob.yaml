@@ -66,7 +66,9 @@ spec:
                   SSH="ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no root@192.168.2.1"
 
                   $SSH "sysupgrade -b /tmp/$FNAME"
-                  scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no "root@192.168.2.1:/tmp/$FNAME" "/tmp/$FNAME"
+                  # OpenWrt's dropbear has no sftp-server, so scp (which defaults to
+                  # SFTP) can't be used — pull the file over a plain SSH pipe instead.
+                  $SSH "cat /tmp/$FNAME" > "/tmp/$FNAME"
                   $SSH "rm -f /tmp/$FNAME"
 
                   mc alias set openwrt http://minio.storage:9000 "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
