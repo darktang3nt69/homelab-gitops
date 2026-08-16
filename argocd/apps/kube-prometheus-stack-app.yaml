@@ -166,45 +166,16 @@ spec:
                 memory: 128Mi
                 cpu: 100m
 
-            # discord-webhook secret created manually (not in git):
-            #   kubectl create secret generic discord-webhook -n monitoring \
-            #     --from-literal=url=<discord-webhook-url>
-            secrets:
-              - discord-webhook
-
-          # Everything routes to Discord by default. Watchdog (the synthetic
-          # always-firing alert that verifies the pipeline itself is alive)
-          # stays suppressed — it's a heartbeat check, not something to page on.
-          config:
-            global:
-              resolve_timeout: 5m
-            route:
-              receiver: discord
-              group_by: [namespace]
-              group_wait: 30s
-              group_interval: 5m
-              repeat_interval: 12h
-              routes:
-                - receiver: "null"
-                  matchers:
-                    - alertname = "Watchdog"
-            inhibit_rules:
-              - source_matchers: [severity = critical]
-                target_matchers: [severity =~ warning|info]
-                equal: [namespace, alertname]
-              - source_matchers: [severity = warning]
-                target_matchers: [severity = info]
-                equal: [namespace, alertname]
-              - source_matchers: [alertname = InfoInhibitor]
-                target_matchers: [severity = info]
-                equal: [namespace]
-              - target_matchers: [alertname = InfoInhibitor]
-            receivers:
-              - name: "null"
-              - name: discord
-                discord_configs:
-                  - webhook_url_file: /etc/alertmanager/secrets/discord-webhook/url
-                    send_resolved: true
+            # Root config is a dedicated AlertmanagerConfig CRD instead of raw
+            # YAML here — the operator's vendored alertmanager-config parser
+            # for the raw `config:` value is older than the Alertmanager
+            # binary itself and doesn't recognize webhook_url_file for
+            # Discord yet. The AlertmanagerConfig CRD uses the operator's own
+            # native API instead, with proper secretKeyRef support so the
+            # webhook URL never has to be plaintext in this file.
+            # See infrastructure/kube-prometheus-stack/alertmanager-config.yaml
+            alertmanagerConfiguration:
+              name: alertmanager-global-config
 
           service:
             type: ClusterIP
