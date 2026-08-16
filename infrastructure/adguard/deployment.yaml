@@ -1,0 +1,66 @@
+---
+# =============================================================================
+# AdGuard Home — Deployment
+# =============================================================================
+# DNS-level ad/tracker blocking with per-device filtering profiles.
+#
+# DNS chain: client -> AdGuard Home (192.168.2.202) -> OpenWrt dnsmasq
+# (192.168.2.1) -> Google DNS. Chaining through OpenWrt's dnsmasq (rather
+# than going straight to the internet) preserves the rebind-protection
+# whitelist for *.k8s.darktang3nt.cloud that's already configured there.
+#
+# First-run setup wizard: http://192.168.2.202:3000 — set upstream DNS
+# server to 192.168.2.1 during setup (port 53, plain DNS).
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adguard-home
+  namespace: adguard
+  labels:
+    app.kubernetes.io/name: adguard-home
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: adguard-home
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: adguard-home
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: hephaestus
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+          operator: Exists
+      containers:
+        - name: adguard-home
+          image: adguard/adguardhome:v0.108.0
+          ports:
+            - name: dns-udp
+              containerPort: 53
+              protocol: UDP
+            - name: dns-tcp
+              containerPort: 53
+              protocol: TCP
+            - name: web-ui
+              containerPort: 3000
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /opt/adguardhome
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: adguard-data

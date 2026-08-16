@@ -11,6 +11,7 @@
 #                   *.darktang3nt.cloud A record points here
 #                   All Twingate-accessed services route through this IP
 #   192.168.2.201 → Promtail syslog receiver (OpenWrt remote logging target)
+#   192.168.2.202 → AdGuard Home (DNS server advertised to LAN via DHCP)
 # =============================================================================
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
