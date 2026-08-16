@@ -51,6 +51,7 @@ spec:
                 - -c
                 - |
                   set -e
+                  apk update >/dev/null
                   apk add --no-cache openssh-client curl >/dev/null
 
                   curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
