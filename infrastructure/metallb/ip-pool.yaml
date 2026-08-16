@@ -2,13 +2,15 @@
 # =============================================================================
 # MetalLB IP Address Pool
 # =============================================================================
-# Pool range: 192.168.1.150 - 192.168.1.220
+# Pool range: 192.168.2.150 - 192.168.2.220
 # These IPs must be outside your router DHCP range
+# (OpenWrt hands out 192.168.2.100-149, so this pool sits safely above it)
 #
 # Reserved allocations:
-#   192.168.1.200 → Envoy Gateway (fixed)
+#   192.168.2.200 → Envoy Gateway (fixed)
 #                   *.darktang3nt.cloud A record points here
 #                   All Twingate-accessed services route through this IP
+#   192.168.2.201 → Promtail syslog receiver (OpenWrt remote logging target)
 # =============================================================================
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
@@ -17,7 +19,7 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    - 192.168.1.150-192.168.1.220
+    - 192.168.2.150-192.168.2.220
 ---
 # =============================================================================
 # MetalLB L2 Advertisement

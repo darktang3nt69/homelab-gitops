@@ -16,8 +16,8 @@ spec:
 # Gateway — Main Ingress
 # =============================================================================
 # Single gateway handles all ingress traffic
-# Gets IP 192.168.1.200 from MetalLB (fixed)
-# *.darktang3nt.cloud → 192.168.1.200 → this gateway → pods
+# Gets IP 192.168.2.200 from MetalLB (fixed)
+# *.darktang3nt.cloud → 192.168.2.200 → this gateway → pods
 #
 # TLS termination:
 #   - Uses wildcard cert from cert-manager (darktang3nt-tls secret)
@@ -56,8 +56,8 @@ metadata:
   namespace: envoy-gateway-system
   annotations:
     # fix the LoadBalancer IP so DNS always points to the right place
-    # *.darktang3nt.cloud A record = 192.168.1.200
-    metallb.universe.tf/loadBalancerIPs: "192.168.1.200"
+    # *.darktang3nt.cloud A record = 192.168.2.200
+    metallb.universe.tf/loadBalancerIPs: "192.168.2.200"
 spec:
   infrastructure:
     parametersRef:

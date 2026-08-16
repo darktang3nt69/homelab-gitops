@@ -215,7 +215,7 @@ spec:
             protocol: UDP
             containerPort: 1514
             annotations:
-              metallb.universe.tf/loadBalancerIPs: "192.168.1.201"
+              metallb.universe.tf/loadBalancerIPs: "192.168.2.201"
             service:
               type: LoadBalancer
               port: 1514

@@ -7,8 +7,8 @@
 # so Prometheus can scrape it via a ServiceMonitor like any other target.
 #
 # Exporter: prometheus-node-exporter-lua running on OpenWrt (Asus RT-AX53U)
-# Router LAN IP: 192.168.1.2 — update here if it ever changes (static
-# reservation recommended on the LAN interface DHCP server)
+# Router LAN IP: 192.168.2.1 — OpenWrt is the LAN gateway, so this is its
+# fixed interface address (not a DHCP lease)
 # =============================================================================
 apiVersion: v1
 kind: Service
@@ -32,7 +32,7 @@ metadata:
     app: openwrt-router
 subsets:
   - addresses:
-      - ip: 192.168.1.2
+      - ip: 192.168.2.1
     ports:
       - name: metrics
         port: 9100

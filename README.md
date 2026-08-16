@@ -37,5 +37,10 @@ MetalLB → cert-manager → Longhorn → Envoy Gateway → Vault → apps
 
 ## Node
 
-- **thor** — `192.168.1.9` — control plane + worker (media workloads)
-- **orangepi** — TBD — worker (general workloads, Phase 2)
+- **thor** — `192.168.2.9` — control plane + worker (media workloads)
+- **hephaestus** — `192.168.2.69` — worker (Orange Pi 5, general workloads)
+
+Both nodes sit behind the OpenWrt router on `192.168.2.0/24`. They also still
+carry their legacy `192.168.1.x` addresses as secondaries because k3s node IPs
+(and thor's embedded etcd) are still bound to them — that migration is pending
+and needs console access to do safely.

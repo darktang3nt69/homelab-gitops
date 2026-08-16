@@ -17,7 +17,7 @@ metadata:
     gateway.envoyproxy.io/owning-gateway-name: homelab-gateway
     gateway.envoyproxy.io/owning-gateway-namespace: envoy-gateway-system
   annotations:
-    metallb.universe.tf/loadBalancerIPs: "192.168.1.200"
+    metallb.universe.tf/loadBalancerIPs: "192.168.2.200"
 spec:
   type: LoadBalancer
   allocateLoadBalancerNodePorts: true
