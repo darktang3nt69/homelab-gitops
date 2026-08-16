@@ -1,0 +1,53 @@
+---
+# =============================================================================
+# OpenWrt Router — Alert Rules
+# =============================================================================
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: openwrt-router
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: openwrt-router
+      rules:
+        - alert: OpenWrtRouterDown
+          expr: up{job="openwrt-router"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "OpenWrt router unreachable"
+            description: "Prometheus hasn't been able to scrape the router's metrics endpoint for 2+ minutes — it may be down, rebooting, or unreachable."
+
+        - alert: OpenWrtHighMemory
+          expr: |
+            100 - ((node_memory_MemAvailable_bytes{job="openwrt-router"} * 100) / node_memory_MemTotal_bytes{job="openwrt-router"}) > 90
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "OpenWrt router memory usage high"
+            description: "Router memory usage has been above 90% for 10+ minutes ({{ $value | printf \"%.1f\" }}%)."
+
+        - alert: OpenWrtHighCPU
+          expr: |
+            (((count(count(node_cpu_seconds_total{job="openwrt-router"}) by (cpu))) - avg(sum by (mode)(irate(node_cpu_seconds_total{mode="idle",job="openwrt-router"}[5m])))) * 100) / count(count(node_cpu_seconds_total{job="openwrt-router"}) by (cpu)) > 90
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "OpenWrt router CPU usage high"
+            description: "Router CPU usage has been above 90% for 10+ minutes."
+
+        - alert: OpenWrtLowFlashSpace
+          expr: |
+            (node_filesystem_avail_bytes{job="openwrt-router",mountpoint="/overlay"} * 100) / node_filesystem_size_bytes{job="openwrt-router",mountpoint="/overlay"} < 10
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "OpenWrt router flash space low"
+            description: "The overlay filesystem (writable flash, ~32MB total) has less than 10% free — package installs or config writes may start failing."
