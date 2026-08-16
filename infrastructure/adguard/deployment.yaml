@@ -10,7 +10,10 @@
 # whitelist for *.k8s.darktang3nt.cloud that's already configured there.
 #
 # First-run setup wizard: http://192.168.2.202:3000 — set upstream DNS
-# server to 192.168.2.1 during setup (port 53, plain DNS).
+# server to 192.168.2.1 during setup (port 53, plain DNS). Once setup
+# completes, AdGuard moves its web UI off the wizard's port 3000 onto
+# whatever admin port was chosen during setup (80 by default) —
+# http://192.168.2.202/ afterward, not :3000.
 # =============================================================================
 apiVersion: apps/v1
 kind: Deployment
@@ -47,8 +50,11 @@ spec:
             - name: dns-tcp
               containerPort: 53
               protocol: TCP
-            - name: web-ui
+            - name: web-ui-setup
               containerPort: 3000
+              protocol: TCP
+            - name: web-ui
+              containerPort: 80
               protocol: TCP
           volumeMounts:
             - name: data

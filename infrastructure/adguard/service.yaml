@@ -19,7 +19,11 @@ spec:
       port: 53
       protocol: TCP
       targetPort: 53
-    - name: web-ui
+    - name: web-ui-setup
       port: 3000
       protocol: TCP
       targetPort: 3000
+    - name: web-ui
+      port: 80
+      protocol: TCP
+      targetPort: 80
