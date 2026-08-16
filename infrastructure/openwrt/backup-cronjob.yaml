@@ -3,12 +3,19 @@
 # OpenWrt Router — Automated Config Backup
 # =============================================================================
 # Nightly: SSH into the router, take a fresh sysupgrade config backup,
-# pull it, upload to MinIO (bucket: openwrt-backups), prune anything
-# older than 30 days.
+# pull it, upload to MinIO (bucket: openwrt-backups).
+#
+# Retention is handled server-side via a MinIO bucket lifecycle rule
+# (30-day expiration, set once at bucket creation) rather than scripted
+# here — this MinIO version denies ListBucket to non-root IAM users
+# regardless of policy (confirmed: even a full s3:* grant still denies
+# listing, while root lists fine), so a list-then-prune loop can't work.
+# Server-side expiration sidesteps it entirely and needs no listing.
 #
 # Uses a dedicated SSH key (openwrt-backup-ssh-key) and scoped MinIO
-# credentials (openwrt-backup-minio-credentials) — see backup-secrets.yaml
-# for why these are separate from the admin key / MinIO root credentials.
+# credentials (openwrt-backup-minio-credentials, PutObject-only) — see
+# BACKUP-SECRETS-SETUP.md for why these are separate from the admin key
+# / MinIO root credentials.
 # =============================================================================
 apiVersion: batch/v1
 kind: CronJob
@@ -74,11 +81,6 @@ spec:
                   mc alias set openwrt http://minio.storage:9000 "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
                   mc cp "/tmp/$FNAME" "openwrt/openwrt-backups/$FNAME"
                   echo "uploaded $FNAME"
-
-                  # retention: keep the newest 30 backups
-                  mc ls openwrt/openwrt-backups/ | awk '{print $NF}' | sort | head -n -30 | while read -r old; do
-                    [ -n "$old" ] && mc rm "openwrt/openwrt-backups/$old" && echo "pruned $old"
-                  done
               volumeMounts:
                 - name: ssh-key
                   mountPath: /keys
