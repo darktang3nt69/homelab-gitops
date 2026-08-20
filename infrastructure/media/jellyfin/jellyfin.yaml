@@ -84,8 +84,7 @@ spec:
             claimName: media-data
         - name: transcode
           emptyDir:
-            medium: Memory
-            sizeLimit: 4Gi
+            sizeLimit: 8Gi
 ---
 apiVersion: v1
 kind: Service
