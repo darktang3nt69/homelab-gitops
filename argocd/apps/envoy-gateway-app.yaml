@@ -4,8 +4,8 @@
 # =============================================================================
 # Installs Envoy Gateway as the cluster ingress controller
 # Handles North-South traffic: external → cluster services
-# Gets a fixed LoadBalancer IP from MetalLB: 192.168.1.200
-# *.darktang3nt.cloud A record points to 192.168.1.200
+# Gets a fixed LoadBalancer IP from MetalLB: 192.168.2.200
+# *.darktang3nt.cloud A record points to 192.168.2.200
 # TLS termination using wildcard cert from cert-manager
 #
 # Requires:

@@ -65,8 +65,8 @@ spec:
 # Applies IPAddressPool + L2Advertisement CRs
 # Must deploy AFTER metallb (needs MetalLB CRDs to exist first)
 # Reserved:
-#   192.168.1.200 → Envoy Gateway (fixed — wildcard DNS points here)
-#   192.168.1.150-199, 201-220 → general pool
+#   192.168.2.200 → Envoy Gateway (fixed — wildcard DNS points here)
+#   192.168.2.150-199, 201-220 → general pool
 # =============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application

@@ -236,7 +236,7 @@ spec:
         kubeEtcd:
           enabled: true
           endpoints:
-            - 192.168.1.9
+            - 192.168.2.9
           service:
             enabled: true
             port: 2381

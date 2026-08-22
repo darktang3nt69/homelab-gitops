@@ -40,7 +40,9 @@ MetalLB → cert-manager → Longhorn → Envoy Gateway → Vault → apps
 - **thor** — `192.168.2.9` — control plane + worker (media workloads)
 - **hephaestus** — `192.168.2.69` — worker (Orange Pi 5, general workloads)
 
-Both nodes sit behind the OpenWrt router on `192.168.2.0/24`. They also still
-carry their legacy `192.168.1.x` addresses as secondaries because k3s node IPs
-(and thor's embedded etcd) are still bound to them — that migration is pending
-and needs console access to do safely.
+Both nodes sit behind the OpenWrt router on `192.168.2.0/24`, which now does
+real routing/NAT for this subnet (not bridge mode). k3s (`node-ip`, `tls-san`)
+and thor's embedded etcd are fully bound to their `192.168.2.x` addresses —
+confirmed live, not just configured. The interfaces also still carry the
+legacy `192.168.1.x` addresses as secondaries; nothing in the cluster depends
+on them anymore, they're just not cleaned up yet.
