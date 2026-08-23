@@ -13,6 +13,12 @@ spec:
   selector:
     matchLabels:
       app: minio
+      # the minio-console Service also carries app: minio and shares the
+      # "http" port name on 9001, so without this it gets matched too —
+      # port 9001 serves the console web UI, not metrics, and always
+      # returns text/html at this path, which is why that showed up as a
+      # separate permanently-failing "minio-console" scrape target
+      monitoring: "true"
   namespaceSelector:
     matchNames:
       - storage
