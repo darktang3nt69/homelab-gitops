@@ -30,6 +30,10 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 2
+      # a wedged apk/ssh/mc step has no built-in timeout and, combined with
+      # concurrencyPolicy: Forbid, can block every future run indefinitely —
+      # seen 2026-08-30 (job ran 8h before being killed manually)
+      activeDeadlineSeconds: 900
       template:
         spec:
           restartPolicy: Never

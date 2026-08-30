@@ -196,11 +196,11 @@ spec:
               cpu: 25m
               memory: 32Mi
             limits:
-              # bumped from 100m: actual usage is trivial (~1m), but node-exporter's
-              # collection sweeps are bursty enough to hit CFS quota in short scheduling
-              # windows and trip CPUThrottlingHigh even though average load is nowhere
-              # near the limit — more headroom stops the (info-level, harmless) noise
-              cpu: 250m
+              # bumped from 100m, then 250m: still tripping CPUThrottlingHigh at
+              # 38-50% on hephaestus (weaker ARM cores) even with average load
+              # nowhere near the limit — bursty collection sweeps need more
+              # headroom in short scheduling windows
+              cpu: 500m
               memory: 64Mi
 
         # ── kube-state-metrics ────────────────────────────────────────────────
