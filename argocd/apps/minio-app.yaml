@@ -98,6 +98,12 @@ spec:
         # Without this, MinIO console redirects to http:// after login, breaking auth.
         environment:
           MINIO_BROWSER_REDIRECT_URL: "https://minio.k8s.darktang3nt.cloud"
+          # default scanner was doing sustained ~90MB/s reads (usage/ILM
+          # crawl across velero+longhorn-backups+loki+tempo buckets),
+          # starving disk I/O cluster-wide and tripping etcd/apiserver —
+          # seen 2026-09-05/06. Slow keeps ILM expiry + usage stats
+          # working, just paced.
+          MINIO_SCANNER_SPEED: "slow"
 
         # ── Metrics ──────────────────────────────────────────────────────────
         metrics:
