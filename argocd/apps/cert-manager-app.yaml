@@ -47,8 +47,11 @@ spec:
             cpu: 50m
             memory: 64Mi
           limits:
+            # bumped from 128Mi: controller got memcg OOM-killed repeatedly
+            # (anon-rss sat right at the limit) — 488 restarts across
+            # controller+cainjector pods, seen 2026-09-05
             cpu: 200m
-            memory: 128Mi
+            memory: 256Mi
 
         cainjector:
           replicaCount: 2
@@ -67,8 +70,9 @@ spec:
               cpu: 25m
               memory: 64Mi
             limits:
+              # bumped from 128Mi, same OOM as controller above
               cpu: 100m
-              memory: 128Mi
+              memory: 256Mi
 
         webhook:
           replicaCount: 2
