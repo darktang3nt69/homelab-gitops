@@ -88,6 +88,11 @@ spec:
           port: 9001
 
         # ── Scheduling ───────────────────────────────────────────────────────
+        # storage is HostPath on /mnt/data/minio, which only exists on thor —
+        # without pinning, the scheduler can (and did) land the pod on
+        # hephaestus, where the mount fails and the rollout hangs forever
+        nodeSelector:
+          kubernetes.io/hostname: thor
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             effect: NoSchedule
