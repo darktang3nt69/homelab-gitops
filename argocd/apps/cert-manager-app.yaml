@@ -28,19 +28,10 @@ spec:
         crds:
           enabled: true
 
-        # HA: 2 replicas spread across thor + hephaestus via anti-affinity
-        # so cert-manager survives either node going down
-        replicaCount: 2
-        affinity:
-          podAntiAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-              - weight: 100
-                podAffinityTerm:
-                  labelSelector:
-                    matchLabels:
-                      app.kubernetes.io/component: controller
-                      app.kubernetes.io/instance: cert-manager
-                  topologyKey: kubernetes.io/hostname
+        # single control-plane node (thor), no real cross-node HA anyway —
+        # power cuts take both nodes together, so 2 replicas bought nothing.
+        # controller is reconcile-only (renewals), safe to run 1.
+        replicaCount: 1
 
         resources:
           requests:
@@ -54,17 +45,7 @@ spec:
             memory: 256Mi
 
         cainjector:
-          replicaCount: 2
-          affinity:
-            podAntiAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-                - weight: 100
-                  podAffinityTerm:
-                    labelSelector:
-                      matchLabels:
-                        app.kubernetes.io/component: cainjector
-                        app.kubernetes.io/instance: cert-manager
-                    topologyKey: kubernetes.io/hostname
+          replicaCount: 1
           resources:
             requests:
               cpu: 25m

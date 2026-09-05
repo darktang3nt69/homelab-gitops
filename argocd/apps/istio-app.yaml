@@ -82,20 +82,11 @@ spec:
               cpu: 500m
               memory: 512Mi
 
-          # HA: 2 replicas spread across thor + hephaestus via anti-affinity
-          # istiod has an HPA (autoscaleEnabled: true, min 1/max 5) which
-          # owns .spec.replicas — replicaCount alone is ignored once the
-          # HPA exists, so the floor has to be raised via autoscaleMin
-          autoscaleMin: 2
-          affinity:
-            podAntiAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-                - weight: 100
-                  podAffinityTerm:
-                    labelSelector:
-                      matchLabels:
-                        istio: pilot
-                    topologyKey: kubernetes.io/hostname
+          # single control-plane node, no real cross-node HA — dataplane
+          # (ztunnel) keeps proxying off cached config during a pilot gap,
+          # safe to run 1. istiod has an HPA (min/max) that owns
+          # .spec.replicas, so the floor is set via autoscaleMin.
+          autoscaleMin: 1
 
           tolerations:
             - key: node-role.kubernetes.io/control-plane

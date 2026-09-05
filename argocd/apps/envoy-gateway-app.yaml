@@ -48,18 +48,9 @@ spec:
               limits:
                 cpu: 500m
                 memory: 256Mi
-          # HA: 2 replicas spread across thor + hephaestus via anti-affinity
-          replicas: 2
-          pod:
-            affinity:
-              podAntiAffinity:
-                preferredDuringSchedulingIgnoredDuringExecution:
-                  - weight: 100
-                    podAffinityTerm:
-                      labelSelector:
-                        matchLabels:
-                          control-plane: envoy-gateway
-                      topologyKey: kubernetes.io/hostname
+          # control-plane only (data-plane proxy pods are separate) — single
+          # control-plane node, no real cross-node HA, safe to run 1
+          replicas: 1
   destination:
     server: https://kubernetes.default.svc
     namespace: envoy-gateway-system
