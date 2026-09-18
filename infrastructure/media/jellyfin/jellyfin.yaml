@@ -127,3 +127,10 @@ spec:
           port: 8096
           group: ""
           kind: Service
+      # Envoy Gateway's default backendRequest timeout is 15s — fine for
+      # normal API calls, but it was killing long-lived video streams mid-
+      # playback every ~15s (Kodi kept reconnecting/re-stalling at the same
+      # position). Streams run for hours, so disable it on this route.
+      timeouts:
+        backendRequest: 0s
+        request: 0s
