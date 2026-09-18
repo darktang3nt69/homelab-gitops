@@ -101,11 +101,14 @@ spec:
                     - ReadWriteOnce
                   resources:
                     requests:
-                      storage: 20Gi
+                      # bumped from 20Gi: retentionSize left only ~2GB
+                      # headroom, tripped KubePersistentVolumeFillingUp
+                      # repeatedly at 12-14% available
+                      storage: 30Gi
 
             # 15 day retention
             retention: 15d
-            retentionSize: "18GB"
+            retentionSize: "25GB"
 
             # scrape interval
             scrapeInterval: 30s
@@ -117,8 +120,11 @@ spec:
                 memory: 512Mi
                 cpu: 200m
               limits:
-                memory: 1Gi
-                cpu: 500m
+                # bumped from 1Gi/500m: steady-state usage was already at
+                # 904Mi (88% of limit) and hitting CPUThrottlingHigh
+                # (25-32%) repeatedly
+                memory: 1.5Gi
+                cpu: 800m
 
             nodeSelector:
               kubernetes.io/hostname: hephaestus
