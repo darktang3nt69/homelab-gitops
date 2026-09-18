@@ -273,6 +273,10 @@ spec:
       kind: StatefulSet
       jsonPointers:
         - /status/terminatingReplicas
+        # volumeClaimTemplates storage size is immutable on StatefulSets —
+        # PVC storage bumps are applied by patching the PVC directly, sync
+        # would otherwise retry-and-fail on this field forever
+        - /spec/volumeClaimTemplates/0/spec/resources/requests/storage
   syncPolicy:
     automated:
       prune: true
