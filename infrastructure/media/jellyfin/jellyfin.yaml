@@ -25,7 +25,11 @@ spec:
         fsGroup: 568
       containers:
         - name: jellyfin
-          image: ghcr.io/hotio/jellyfin:release
+          # pinned to running 10.11.11 digest — :release floated to 12.2
+          # already, which needs a deliberate migration (backup, username
+          # case check, legacy display mode for ElegantFin theme, library
+          # rescan) before landing. Bump deliberately, not via tag drift.
+          image: ghcr.io/hotio/jellyfin@sha256:4edfc949c568264551baa4503e28128204310fad93a5e5dd46bf4b35cc2e6201
           env:
             - name: PUID
               value: "568"
