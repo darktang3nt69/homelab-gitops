@@ -25,11 +25,13 @@ spec:
         fsGroup: 568
       containers:
         - name: jellyfin
-          # pinned to running 10.11.11 digest — :release floated to 12.2
-          # already, which needs a deliberate migration (backup, username
-          # case check, legacy display mode for ElegantFin theme, library
-          # rescan) before landing. Bump deliberately, not via tag drift.
-          image: ghcr.io/hotio/jellyfin@sha256:4edfc949c568264551baa4503e28128204310fad93a5e5dd46bf4b35cc2e6201
+          # 12.2 (release-a2b0366 manifest list) — upgraded from 10.11.11 on
+          # 2026-10-13. Full /config backup taken first. DB schema rewrite
+          # on first boot, no rollback besides that backup. After boot:
+          # set Display Mode to Legacy per-client (ElegantFin theme isn't
+          # modern-UI-ready yet), run a full library scan, update
+          # KodiSyncQueue plugin.
+          image: ghcr.io/hotio/jellyfin@sha256:e1126ace7f0aef245e1992fbbf791ad9f5a7ca6232528dc034d77c25e74979d9
           env:
             - name: PUID
               value: "568"
