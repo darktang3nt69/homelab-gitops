@@ -1,0 +1,15 @@
+# =============================================================================
+# Longhorn Settings — backup coverage
+# =============================================================================
+# allow-recurring-job-while-volume-detached: default is false, which means
+# the daily backup RecurringJob silently skips any volume whose pod isn't
+# currently running at cron time (most volumes in this cluster, checked
+# 2026-10-15 -- 15 of 17 were detached). true makes Longhorn auto-attach a
+# detached volume just long enough to snapshot+backup it, then detach again.
+# =============================================================================
+apiVersion: longhorn.io/v1beta2
+kind: Setting
+metadata:
+  name: allow-recurring-job-while-volume-detached
+  namespace: longhorn-system
+value: "true"
