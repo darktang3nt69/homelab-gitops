@@ -71,7 +71,11 @@ spec:
             - name: RUN_ON_START
               value: "true"
             - name: API_PORT
-              value: "0"
+              value: "8080"
+          ports:
+            - name: api
+              containerPort: 8080
+              protocol: TCP
           resources:
             requests:
               cpu: 10m
@@ -79,3 +83,15 @@ spec:
             limits:
               cpu: 100m
               memory: 64Mi
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            failureThreshold: 3

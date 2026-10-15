@@ -115,6 +115,25 @@ spec:
           serviceMonitor:
             enabled: true
 
+        # ── Health probes ───────────────────────────────────────────────────
+        # chart doesn't enable these by default — pod can sit Running with a
+        # dead/wedged server and nothing flags it (same failure class as the
+        # AdGuard DNS outage: Running != actually serving).
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /minio/health/ready
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 20
+
   destination:
     server: https://kubernetes.default.svc
     namespace: storage
