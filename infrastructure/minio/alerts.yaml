@@ -1,0 +1,29 @@
+---
+# =============================================================================
+# MinIO — Alert Rules
+# =============================================================================
+# MinIO's official Helm chart (charts.min.io, v5.4.0) has no configurable
+# liveness/readiness probes — pod can sit Running with a dead/wedged server
+# and k8s never flags it. ServiceMonitor already scrapes /minio/v2/metrics/
+# cluster, so a standard "scrape target down" alert covers the same failure
+# class without fighting the chart.
+# =============================================================================
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: minio
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: minio
+      rules:
+        - alert: MinioDown
+          expr: up{job="minio"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "MinIO unreachable"
+            description: "Prometheus hasn't been able to scrape MinIO's metrics endpoint for 2+ minutes — it's the backup target for Velero, Longhorn, Loki and Tempo."
