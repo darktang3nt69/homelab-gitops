@@ -1,0 +1,23 @@
+# =============================================================================
+# Longhorn RecurringJob — daily backup, all volumes
+# =============================================================================
+# The BackupTarget (backupstore.yaml) has pointed at MinIO since 2026-08-01
+# but nothing ever triggered a backup — zero RecurringJobs existed cluster-
+# wide. Every volume already carries the default recurring-job-group label
+# (recurring-job-group.longhorn.io/default: enabled), so one job here covers
+# every PVC in the cluster, not just the one that prompted this.
+#
+# task: backup = snapshot + upload to the S3 backup target in one step.
+# =============================================================================
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: daily-backup
+  namespace: longhorn-system
+spec:
+  cron: "30 3 * * *"
+  task: backup
+  groups:
+    - default
+  retain: 7
+  concurrency: 2
