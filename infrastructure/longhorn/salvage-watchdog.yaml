@@ -1,0 +1,93 @@
+# =============================================================================
+# Longhorn Salvage Watchdog
+# =============================================================================
+# auto-salvage (setting, true) is supposed to recover a volume once every
+# replica has failed, but it has a bug observed twice (2026-10-15, 2026-10-17):
+# it logs "bringing up 0 replicas for auto-salvage" and never actually clears
+# the replica's spec.failedAt, so the volume sits detached+faulted forever
+# until someone does it by hand -- confirmed safe, data-preserving fix:
+#   kubectl patch replicas.longhorn.io <name> -n longhorn-system \
+#     --type=merge -p '{"spec":{"failedAt":""}}'
+# This CronJob runs that exact patch automatically, every 5 minutes, for any
+# volume currently faulted. It never touches a healthy volume or a replica
+# that isn't already marked failed -- same operation done by hand 16+ times
+# this week with zero data loss.
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: longhorn-salvage-watchdog
+  namespace: longhorn-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: longhorn-salvage-watchdog
+  namespace: longhorn-system
+rules:
+  - apiGroups: ["longhorn.io"]
+    resources: ["volumes", "replicas"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: longhorn-salvage-watchdog
+  namespace: longhorn-system
+subjects:
+  - kind: ServiceAccount
+    name: longhorn-salvage-watchdog
+    namespace: longhorn-system
+roleRef:
+  kind: Role
+  name: longhorn-salvage-watchdog
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: longhorn-salvage-watchdog
+  namespace: longhorn-system
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          serviceAccountName: longhorn-salvage-watchdog
+          restartPolicy: Never
+          containers:
+            - name: salvage
+              image: bitnami/kubectl:1.32.3
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -e
+                  FAULTED=$(kubectl get volumes.longhorn.io -n longhorn-system \
+                    -o jsonpath='{range .items[?(@.status.robustness=="faulted")]}{.metadata.name}{"\n"}{end}')
+                  if [ -z "$FAULTED" ]; then
+                    echo "no faulted volumes"
+                    exit 0
+                  fi
+                  for VOL in $FAULTED; do
+                    REPLICAS=$(kubectl get replicas.longhorn.io -n longhorn-system \
+                      -l longhornvolume="$VOL" \
+                      -o jsonpath='{range .items[?(@.spec.failedAt!="")]}{.metadata.name}{"\n"}{end}')
+                    for R in $REPLICAS; do
+                      echo "salvaging replica $R (volume $VOL)"
+                      kubectl patch replicas.longhorn.io "$R" -n longhorn-system \
+                        --type=merge -p '{"spec":{"failedAt":""}}'
+                    done
+                  done
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
