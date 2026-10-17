@@ -106,9 +106,15 @@ spec:
                       # repeatedly at 12-14% available
                       storage: 30Gi
 
-            # 15 day retention
-            retention: 15d
-            retentionSize: "25GB"
+            # retention halved 2026-10-17 at user's request to make room for
+            # a 2nd Longhorn replica cluster-wide -- current usage was 24GB,
+            # above this new cap, so Prometheus will prune oldest blocks on
+            # its next compaction cycle to come back under it (not instant).
+            # PVC storage stays 30Gi: Longhorn is thin-provisioned, so the
+            # declared size costs nothing idle -- only retentionSize controls
+            # real disk use, and PVCs can't be shrunk anyway.
+            retention: 7d
+            retentionSize: "16GB"
 
             # scrape interval
             scrapeInterval: 30s
