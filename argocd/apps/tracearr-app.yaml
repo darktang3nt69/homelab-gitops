@@ -39,7 +39,15 @@ spec:
           nodeSelector:
             kubernetes.io/hostname: hephaestus
           persistence:
-            size: 20Gi
+            # halved 2026-10-17 at user's request -- actual usage is ~622Mi,
+            # nowhere close to either number. NOTE: this only affects a fresh
+            # PVC (e.g. disaster recovery restore). The live PVC already
+            # exists at 20Gi and this does NOT shrink it -- Kubernetes/
+            # Longhorn don't support shrinking a live volume at all, and
+            # even if they did, there'd be no real benefit: Longhorn is
+            # thin-provisioned, so the declared ceiling costs nothing idle.
+            size: 10Gi
+
           resources:
             limits:
               memory: 2Gi
