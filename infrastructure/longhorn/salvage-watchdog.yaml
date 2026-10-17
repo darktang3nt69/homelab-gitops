@@ -62,9 +62,9 @@ spec:
           restartPolicy: Never
           containers:
             - name: salvage
-              image: bitnami/kubectl:1.32.3
+              image: alpine/k8s:1.36.2
               command:
-                - /bin/bash
+                - /bin/sh
                 - -c
                 - |
                   set -e
